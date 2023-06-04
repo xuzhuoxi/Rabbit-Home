@@ -5,6 +5,7 @@ package home
 
 import (
 	"github.com/xuzhuoxi/Rabbit-Home/src/core/conf"
+	"github.com/xuzhuoxi/infra-go/logx"
 )
 
 const (
@@ -20,7 +21,13 @@ const (
 var (
 	Server       IRabbitHomeServer
 	ServerConfig *conf.ServerConfig
+	Logger       logx.ILogger
 )
+
+func init() {
+	Logger = logx.NewLogger()
+	Logger.SetConfig(logx.LogConfig{Type: logx.TypeConsole, Level: logx.LevelAll})
+}
 
 // StartHomeServer 启动服务器
 func StartHomeServer() {

@@ -20,8 +20,8 @@ var (
 	LinkedTimeout int64 // 超时时间
 )
 
-// LinkedEntity 已经连接的实例信息
-type LinkedEntity struct {
+// LinkEntity 连接的实例信息
+type LinkEntity struct {
 	Id         string `json:"id"`      // 实例Id
 	PlatformId string `json:"pid"`     // 平台Id
 	Name       string `json:"name"`    // 实例名称
@@ -29,13 +29,13 @@ type LinkedEntity struct {
 	Addr       string `json:"addr"`    // 连接地址
 }
 
-func (o *LinkedEntity) String() string {
+func (o *LinkEntity) String() string {
 	return fmt.Sprintf("{Id=%s,PId=%s,Name=%s,Network=%s,Addr=%s}",
 		o.Id, o.PlatformId, o.Name, o.Network, o.Addr)
 }
 
 // IsNotValid 是否为未验证
-func (o *LinkedEntity) IsNotValid() bool {
+func (o *LinkEntity) IsNotValid() bool {
 	return len(o.Id) == 0 || len(o.Name) == 0
 }
 

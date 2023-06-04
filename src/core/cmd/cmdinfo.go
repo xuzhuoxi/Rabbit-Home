@@ -4,7 +4,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/xuzhuoxi/Rabbit-Home/src/core/home"
 	"github.com/xuzhuoxi/infra-go/cmdx"
 )
@@ -19,7 +18,7 @@ func OnCmdInfo(flagSet *cmdx.FlagSetExtend, args []string) {
 	flagSet.Parse(args)
 	nb := flagSet.CheckKey(infoId)
 	if !nb {
-		fmt.Println("Command \"" + flagSet.Name() + "\" args error!")
+		home.Logger.Infoln("Command \"" + flagSet.Name() + "\" args error!")
 		return
 	}
 
@@ -27,5 +26,5 @@ func OnCmdInfo(flagSet *cmdx.FlagSetExtend, args []string) {
 	if !ok {
 		return
 	}
-	fmt.Println(entity)
+	home.Logger.Infoln(entity)
 }

@@ -1,20 +1,20 @@
-// Package internal
+// Package home
 // Create on 2023/6/4
 // @author xuzhuoxi
-package internal
+package home
 
 import (
-	"fmt"
 	"net/http"
 )
 
 func NewClientRouteHandler() http.Handler {
-	return &clientRouteHandler{}
+	return &clientRouteHandler{post: clientPost}
 }
 
 type clientRouteHandler struct {
+	post bool
 }
 
 func (l *clientRouteHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	fmt.Println("clientRouteHandler")
+	Logger.Infoln("clientRouteHandler")
 }

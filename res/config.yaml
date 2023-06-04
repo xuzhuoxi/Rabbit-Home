@@ -9,3 +9,4 @@ internal:
 external:
   allows_on: false
   blocks_on: false
+logger:

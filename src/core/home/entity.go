@@ -14,9 +14,13 @@ var (
 	EntityEmpty = RegisteredEntity{}
 )
 
+func NewRegisteredEntity(entity core.LinkEntity) *RegisteredEntity {
+	return &RegisteredEntity{LinkEntity: entity, lastUpdateNano: time.Now().UnixNano()}
+}
+
 // RegisteredEntity 已注册实例
 type RegisteredEntity struct {
-	core.LinkedEntity
+	core.LinkEntity
 	State  core.EntityState
 	Detail core.EntityDetailState
 
@@ -24,7 +28,7 @@ type RegisteredEntity struct {
 }
 
 func (o *RegisteredEntity) String() string {
-	return fmt.Sprintf("{%v,%v,%v}", o.LinkedEntity, o.State, o.Detail)
+	return fmt.Sprintf("{%v,%v,%v}", o.LinkEntity, o.State, o.Detail)
 }
 
 // IsTimeout 是否已经超时

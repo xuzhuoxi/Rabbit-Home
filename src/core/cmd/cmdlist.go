@@ -4,7 +4,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/xuzhuoxi/Rabbit-Home/src/core/home"
 	"github.com/xuzhuoxi/infra-go/cmdx"
 )
@@ -27,7 +26,7 @@ func OnCmdList(flagSet *cmdx.FlagSetExtend, args []string) {
 	bPId := flagSet.CheckKey(listPlatformId)
 
 	list := home.Server.GetEntityList()
-	fmt.Println("999", list)
+	home.Logger.Infoln("999", list)
 	entities := list.GetEntities(func(each home.RegisteredEntity) bool {
 		if bName && each.Name != *name {
 			return false
@@ -41,10 +40,10 @@ func OnCmdList(flagSet *cmdx.FlagSetExtend, args []string) {
 		return true
 	})
 	if len(entities) == 0 {
-		fmt.Println("0000000")
+		home.Logger.Infoln("0000000")
 		return
 	}
 	for _, entity := range entities {
-		fmt.Println(entity)
+		home.Logger.Infoln(entity)
 	}
 }

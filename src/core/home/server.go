@@ -6,7 +6,6 @@ package home
 import (
 	"errors"
 	"fmt"
-	"github.com/xuzhuoxi/Rabbit-Home/src/core/home/internal"
 	"github.com/xuzhuoxi/infra-go/netx"
 	"net/http"
 	"sync"
@@ -60,10 +59,10 @@ func (o *RabbitHomeServer) Init() {
 		return
 	}
 	o.HttpServer = netx.NewHttpServer().(*netx.HttpServer)
-	o.HttpServer.MapHandle(PatternLink, internal.NewServerLinkHandler())
-	o.HttpServer.MapHandle(PatternUnlink, internal.NewServerUnlinkHandler())
-	o.HttpServer.MapHandle(PatternUpdate, internal.NewServerUpdateHandler())
-	o.HttpServer.MapHandle(PatternRoute, internal.NewClientRouteHandler())
+	o.HttpServer.MapHandle(PatternLink, newServerLinkHandler())
+	o.HttpServer.MapHandle(PatternUnlink, newServerUnlinkHandler())
+	o.HttpServer.MapHandle(PatternUpdate, NewServerUpdateHandler())
+	o.HttpServer.MapHandle(PatternRoute, NewClientRouteHandler())
 }
 
 func (o *RabbitHomeServer) MapHandle(pattern string, handler http.Handler) {
@@ -120,4 +119,40 @@ func (o *RabbitHomeServer) stop() error {
 		return errors.New("HttpServer is not running! ")
 	}
 	return o.HttpServer.StopServer()
+}
+
+// Private
+
+type sortWeightList []*RegisteredEntity
+
+func (o sortWeightList) Len() int {
+	return len(o)
+}
+
+func (o sortWeightList) Less(i, j int) bool {
+	bi := o[i].IsTimeout()
+	bj := o[j].IsTimeout()
+	if bi == bj {
+		return o[i].State.Weight < o[j].State.Weight
+	} else {
+		return bj
+	}
+}
+
+func (o sortWeightList) Swap(i, j int) {
+	o[i], o[j] = o[j], o[i]
+}
+
+type sortLinkList []*RegisteredEntity
+
+func (o sortLinkList) Len() int {
+	return len(o)
+}
+
+func (o sortLinkList) Less(i, j int) bool {
+	return o[i].Detail.Links < o[j].Detail.Links
+}
+
+func (o sortLinkList) Swap(i, j int) {
+	o[i], o[j] = o[j], o[i]
 }
