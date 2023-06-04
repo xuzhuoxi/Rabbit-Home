@@ -1,0 +1,11 @@
+http:
+  addr: ":9000"
+internal:
+  allows_on: false
+  allows:
+  blocks_on: false
+  blocks:
+    - "192.168.0.1"
+external:
+  allows_on: false
+  blocks_on: false
