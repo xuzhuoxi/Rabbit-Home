@@ -48,13 +48,13 @@ type HttpConfig struct {
 	Addr string `yaml:"addr"` // 服务器启动监听地址
 }
 
-type StartConfig struct {
+type ServerConfig struct {
 	Http     HttpConfig `yaml:"http"`     // Http服务
 	Internal *IpControl `yaml:"internal"` // 内部Ip控制
 	External *IpControl `yaml:"external"` // 外部IP控制
 }
 
-func (o *StartConfig) PreProcess() {
+func (o *ServerConfig) PreProcess() {
 	if o.Internal != nil {
 		if o.Internal.AllowOn {
 			o.Internal.allowIps = newMultiIPGroupFromAddr(o.Internal.AllowIPs)
@@ -73,14 +73,14 @@ func (o *StartConfig) PreProcess() {
 	}
 }
 
-func (o *StartConfig) CheckInternalIP(ipAddr string) bool {
+func (o *ServerConfig) CheckInternalIP(ipAddr string) bool {
 	if nil == o.Internal {
 		return true
 	}
 	return o.Internal.Check(ipAddr)
 }
 
-func (o *StartConfig) CheckExternalIP(ipAddr string) bool {
+func (o *ServerConfig) CheckExternalIP(ipAddr string) bool {
 	if nil == o.External {
 		return true
 	}

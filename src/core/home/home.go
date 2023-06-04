@@ -3,6 +3,10 @@
 // @author xuzhuoxi
 package home
 
+import (
+	"github.com/xuzhuoxi/Rabbit-Home/src/core/conf"
+)
+
 const (
 	DefaultPort = 80
 	DefaultAddr = ":80"
@@ -14,7 +18,8 @@ const (
 )
 
 var (
-	Server IRabbitHomeServer
+	Server       IRabbitHomeServer
+	ServerConfig *conf.ServerConfig
 )
 
 // StartHomeServer 启动服务器
@@ -23,7 +28,8 @@ func StartHomeServer() {
 		Server = NewRabbitHomeServer()
 		Server.Init()
 	}
-	err := Server.Start()
+	initConfig()
+	err := Server.StartByAddr(ServerConfig.Http.Addr)
 	if nil != err {
 		panic(err)
 	}
