@@ -60,10 +60,10 @@ func (o *RabbitHomeServer) Init() {
 		return
 	}
 	o.HttpServer = netx.NewHttpServer().(*netx.HttpServer)
-	o.HttpServer.MapHandle(PatternLogin, internal.NewLoginHandler())
-	o.HttpServer.MapHandle(PatternLogout, internal.NewLogoutHandler())
-	o.HttpServer.MapHandle(PatternUpdate, internal.NewUpdateHandler())
-	o.HttpServer.MapHandle(PatternRoute, internal.NewRouteHandler())
+	o.HttpServer.MapHandle(PatternLink, internal.NewServerLinkHandler())
+	o.HttpServer.MapHandle(PatternUnlink, internal.NewServerUnlinkHandler())
+	o.HttpServer.MapHandle(PatternUpdate, internal.NewServerUpdateHandler())
+	o.HttpServer.MapHandle(PatternRoute, internal.NewClientRouteHandler())
 }
 
 func (o *RabbitHomeServer) MapHandle(pattern string, handler http.Handler) {

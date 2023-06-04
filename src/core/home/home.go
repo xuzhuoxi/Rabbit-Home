@@ -11,10 +11,10 @@ const (
 	DefaultPort = 80
 	DefaultAddr = ":80"
 
-	PatternRoute  = "/route"
+	PatternLink   = "/link"
+	PatternUnlink = "/unlink"
 	PatternUpdate = "/update"
-	PatternLogin  = "/login"
-	PatternLogout = "/logout"
+	PatternRoute  = "/route"
 )
 
 var (
