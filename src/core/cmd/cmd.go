@@ -10,7 +10,6 @@ import (
 
 func StartCmdListener() {
 	cmdLine := cmdx.CreateCommandLineListener("请输入命令：", 0)
-	cmdLine.MapCommand(core.CmcKeyState, OnCmdState)
 	cmdLine.MapCommand(core.CmcKeyList, OnCmdList)
 	cmdLine.MapCommand(core.CmdKeyInfo, OnCmdInfo)
 	cmdLine.MapCommand(core.CmdKeyKick, OnCmdKick)

@@ -16,6 +16,8 @@ const (
 	PatternUnlink = "/unlink"
 	PatternUpdate = "/update"
 	PatternRoute  = "/route"
+
+	PatternDataKey = "data"
 )
 
 var (

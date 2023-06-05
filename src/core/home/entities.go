@@ -209,7 +209,7 @@ func (o *EntityList) QuerySmartEntity() (entity RegisteredEntity, ok bool) {
 func (o *EntityList) findEntity(funcEach funcEach) (entity *RegisteredEntity, ok bool) {
 	for index := range o.Entities {
 		if funcEach(o.Entities[index]) {
-			return o.Entities[index], ok
+			return o.Entities[index], true
 		}
 	}
 	ok = false

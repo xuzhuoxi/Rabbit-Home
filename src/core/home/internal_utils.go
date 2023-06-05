@@ -4,7 +4,8 @@
 package home
 
 import (
-	jsoniter "github.com/json-iterator/go"
+	"encoding/base64"
+	"github.com/json-iterator/go"
 	"net/http"
 )
 
@@ -13,33 +14,42 @@ const (
 	clientPost = false
 )
 
-func getValueWithGet(request *http.Request, key string, value interface{}) bool {
-	val := []byte(request.FormValue(key))
-	jsoniter.Unmarshal(val, value)
-	return true
-}
-
-func getValueWithPost(request *http.Request, key string, value interface{}) bool {
+func getValueWithPost(request *http.Request, key string, value interface{}) error {
 	if err := request.ParseForm(); err != nil {
-		Logger.Infoln(err)
-		return false
+		return err
 	}
 	val := []byte(request.PostFormValue(key))
-	jsoniter.Unmarshal(val, value)
-	return true
-}
-
-func getStringWithGet(request *http.Request, key string) (value string, err error) {
-	return base62ToString(request.FormValue(key))
+	return jsoniter.Unmarshal(val, value)
 }
 
 func getStringWithPost(request *http.Request, key string) (value string, err error) {
 	if err := request.ParseForm(); err != nil {
 		return "", err
 	}
-	return base62ToString(request.PostFormValue(key))
+	return request.PostFormValue(key), nil
 }
 
-func base62ToString(base64 string) (str string, err error) {
-	return base64, nil
+func getValueWithGet(request *http.Request, key string, value interface{}) error {
+	val, err := fromBase64(request.FormValue(key))
+	if nil != err {
+		return err
+	}
+	return jsoniter.Unmarshal([]byte(val), value)
+}
+
+func getStringWithGet(request *http.Request, key string) (value string, err error) {
+	val := request.FormValue(key)
+	return fromBase64(val)
+}
+
+func fromBase64(base64Str string) (str string, err error) {
+	s, err1 := base64.StdEncoding.DecodeString(base64Str)
+	if nil != err {
+		return "", err1
+	}
+	return string(s), nil
+}
+
+func toBase64(str string) (base64Str string, err error) {
+	return base64.StdEncoding.EncodeToString([]byte(str)), nil
 }

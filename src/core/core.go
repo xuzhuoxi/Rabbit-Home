@@ -73,7 +73,7 @@ type EntityDetailState struct {
 }
 
 func (o *EntityDetailState) String() string {
-	return fmt.Sprintf("{Id=%s,Start=%v,MaxLink=%v,Link=%v",
+	return fmt.Sprintf("{Id=%s,Start=%v,MaxLink=%v,Link=%v}",
 		o.Id, o.StartTimestamp, o.MaxLinks, o.Links)
 }
 

@@ -7,10 +7,6 @@ import (
 	"net/http"
 )
 
-const (
-	unlinkKey = "unlink"
-)
-
 func newServerUnlinkHandler() http.Handler {
 	return &serverUnlinkHandler{post: serverPost}
 }
@@ -21,13 +17,13 @@ type serverUnlinkHandler struct {
 
 func (l *serverUnlinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	id := ""
-	ok := false
+	var err error
 	if l.post {
-		id, ok = getStringWithPost(request, linkKey)
+		id, err = getStringWithPost(request, PatternDataKey)
 	} else {
-		id, ok = getStringWithGet(request, linkKey)
+		id, err = getStringWithGet(request, PatternDataKey)
 	}
-	if !ok {
+	if nil != err {
 		return
 	}
 	Server.GetEntityList().RemoveEntity(id)

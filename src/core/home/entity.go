@@ -28,7 +28,11 @@ type RegisteredEntity struct {
 }
 
 func (o *RegisteredEntity) String() string {
-	return fmt.Sprintf("{%v,%v,%v}", o.LinkEntity, o.State, o.Detail)
+	return fmt.Sprintf("{Base=%s, State=%s}", o.LinkEntity.String(), o.State.String())
+}
+
+func (o *RegisteredEntity) DetailString() string {
+	return fmt.Sprintf("{Base=%s, State=%s, Detail=%s}", o.LinkEntity.String(), o.State.String(), o.Detail.String())
 }
 
 // IsTimeout 是否已经超时

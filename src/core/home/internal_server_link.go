@@ -4,12 +4,9 @@
 package home
 
 import (
+	"fmt"
 	"github.com/xuzhuoxi/Rabbit-Home/src/core"
 	"net/http"
-)
-
-const (
-	linkKey = "link"
 )
 
 func newServerLinkHandler() http.Handler {
@@ -21,16 +18,26 @@ type serverLinkHandler struct {
 }
 
 func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	data := &core.LinkEntity{}
-	ok := false
+	linkEntity := &core.LinkEntity{}
+	var err0 error
 	if l.post {
-		ok = getValueWithPost(request, linkKey, data)
+		err0 = getValueWithPost(request, PatternDataKey, linkEntity)
 	} else {
-		ok = getValueWithGet(request, linkKey, data)
+		err0 = getValueWithGet(request, PatternDataKey, linkEntity)
 	}
-	if !ok || data.IsNotValid() {
+	if nil != err0 {
+		Logger.Warnln(fmt.Sprintf("LinkEntity Fail: %v", err0))
 		return
 	}
-	entity := NewRegisteredEntity(*data)
-	Server.GetEntityList().AddEntity(*entity)
+	if linkEntity.IsNotValid() {
+		Logger.Warnln(fmt.Sprintf("LinkEntity Fail: Entity is not valid. %v", linkEntity))
+		return
+	}
+	entity := NewRegisteredEntity(*linkEntity)
+	err := Server.GetEntityList().AddEntity(*entity)
+	if nil != err {
+		Logger.Warnln(fmt.Sprintf("LinkEntity Fail: %v", err))
+		return
+	}
+	Logger.Infoln(fmt.Sprintf("LinkEntity Succ: %v", linkEntity))
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/xuzhuoxi/infra-go/cmdx"
 )
 
-// kick-n=Name
+// OnCmdKick -id=Name
 func OnCmdKick(flagSet *cmdx.FlagSetExtend, args []string) {
 	//name := flagSet.String("n", "", "-n=Name")
 	//flagSet.Parse(args)
