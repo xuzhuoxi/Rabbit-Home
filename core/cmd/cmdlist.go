@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/xuzhuoxi/Rabbit-Home/src/core/home"
+	"github.com/xuzhuoxi/Rabbit-Home/core/home"
 	"github.com/xuzhuoxi/infra-go/cmdx"
 )
 
@@ -22,12 +22,12 @@ func OnCmdList(flagSet *cmdx.FlagSetExtend, args []string) {
 	on := flagSet.Bool(listOn, false, "-on=[true|false]")
 	pId := flagSet.String(listPlatformId, "", "-pid=PlatformId")
 	flagSet.Parse(args)
+
 	bName := flagSet.CheckKey(listName)
 	bOn := flagSet.CheckKey(listOn)
 	bPId := flagSet.CheckKey(listPlatformId)
 
-	list := home.Server.GetEntityList()
-	entities := list.GetEntities(func(each home.RegisteredEntity) bool {
+	entities := home.Server.GetEntities(func(each home.RegisteredEntity) bool {
 		if bName && each.Name != *name {
 			return false
 		}

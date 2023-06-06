@@ -4,6 +4,7 @@
 package home
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -26,5 +27,10 @@ func (l *serverUnlinkHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 	if nil != err {
 		return
 	}
-	Server.GetEntityList().RemoveEntity(id)
+	entity, ok := Server.RemoveEntity(id)
+	if !ok || nil == entity {
+		Logger.Warnln(fmt.Sprintf("Unlink Entity(%s) fail! Entity is not exist!", id))
+		return
+	}
+	fmt.Println(fmt.Sprintf("Unlink Entity(%s) Succ!", id))
 }

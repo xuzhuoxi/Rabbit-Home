@@ -5,13 +5,18 @@ package home
 
 import (
 	"errors"
-	"github.com/xuzhuoxi/Rabbit-Home/src/core"
+	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"sort"
 	"sync"
 )
 
 type FuncEach func(each RegisteredEntity) bool
 type funcEach func(each *RegisteredEntity) bool
+
+type IEntitySize interface {
+	// Size 实例数量
+	Size() int
+}
 
 // IEntityGetter 读取实例接口
 type IEntityGetter interface {
@@ -23,8 +28,6 @@ type IEntityGetter interface {
 	GetEntityByName(name string) (entity []RegisteredEntity)
 	// GetEntitiesByPlatform 通过平台Id获取实例列表
 	GetEntitiesByPlatform(platformId string) (entities []RegisteredEntity)
-	// Size 实例数量
-	Size() int
 }
 
 // IEntitySetter 设置实例接口
@@ -51,6 +54,7 @@ type IEntityQuery interface {
 
 // IEntityList 实例列表
 type IEntityList interface {
+	IEntitySize
 	IEntityGetter
 	IEntitySetter
 	IEntityStateUpdate
@@ -91,6 +95,9 @@ func (o *EntityList) GetEntityById(id string) (entity RegisteredEntity, ok bool)
 }
 
 func (o *EntityList) GetEntities(funcEach FuncEach) (entities []RegisteredEntity) {
+	if nil == funcEach {
+		return nil
+	}
 	o.lock.RLock()
 	defer o.lock.RUnlock()
 	for index := range o.Entities {

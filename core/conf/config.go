@@ -3,6 +3,11 @@
 // @author xuzhuoxi
 package conf
 
+import (
+	"github.com/xuzhuoxi/infra-go/logx"
+	"github.com/xuzhuoxi/infra-go/mathx"
+)
+
 const (
 	SepIp      = ","
 	SepIpRange = "-"
@@ -48,10 +53,18 @@ type HttpConfig struct {
 	Addr string `yaml:"addr"` // 服务器启动监听地址
 }
 
+type LoggerConfig struct {
+	Type     logx.LogType   `yaml:"type"`  // 日志记录类型 0:Console 1:RollingFile 2:DailyFile 3:DailyRollingFile
+	Level    logx.LogLevel  `yaml:"level"` // 日志记录等级 0:All 1:Trace 2:Debug 3:Info 4:Warn 5:Error 6:Fatal 7:Off
+	FilePath string         `yaml:"file"`  // 日志记录文件信息
+	Max      mathx.SizeUnit `yaml:"max"`   // 日志最大容量
+}
 type ServerConfig struct {
-	Http     HttpConfig `yaml:"http"`     // Http服务
-	Internal *IpControl `yaml:"internal"` // 内部Ip控制
-	External *IpControl `yaml:"external"` // 外部IP控制
+	Http     HttpConfig    `yaml:"http"`     // Http服务
+	Internal *IpControl    `yaml:"internal"` // 内部Ip控制
+	External *IpControl    `yaml:"external"` // 外部IP控制
+	Timeout  int64         `yaml:"timeout"`  // 超时参数
+	Logger   *LoggerConfig `yaml:"logger"`   // 日志记录参数
 }
 
 func (o *ServerConfig) PreProcess() {

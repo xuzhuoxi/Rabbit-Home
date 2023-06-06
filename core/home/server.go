@@ -6,6 +6,7 @@ package home
 import (
 	"errors"
 	"fmt"
+	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"github.com/xuzhuoxi/infra-go/netx"
 	"net/http"
 	"sync"
@@ -28,8 +29,10 @@ type IRabbitHomeServer interface {
 	// Stop 停止服务器
 	Stop() error
 
-	// GetEntityList 取实例列表
-	GetEntityList() IEntityList
+	IEntityGetter
+	IEntitySetter
+	IEntityStateUpdate
+	IEntityQuery
 }
 
 func NewRabbitHomeServer() IRabbitHomeServer {
@@ -46,10 +49,6 @@ type RabbitHomeServer struct {
 func (o *RabbitHomeServer) String() string {
 	return fmt.Sprintf("{Running=%v, ListenAddr=%s, Size=%d}",
 		o.HttpServer.Running(), o.HttpServer.Server.Addr, o.EntityList.Size())
-}
-
-func (o *RabbitHomeServer) GetEntityList() IEntityList {
-	return o.EntityList
 }
 
 func (o *RabbitHomeServer) Init() {
@@ -100,6 +99,46 @@ func (o *RabbitHomeServer) Stop() error {
 	defer o.lock.Unlock()
 	return o.stop()
 }
+
+// -------------------------
+
+func (o *RabbitHomeServer) GetEntityById(id string) (entity RegisteredEntity, ok bool) {
+	return o.EntityList.GetEntityById(id)
+}
+
+func (o *RabbitHomeServer) GetEntities(funcEach FuncEach) (entities []RegisteredEntity) {
+	return o.EntityList.GetEntities(funcEach)
+}
+
+func (o *RabbitHomeServer) GetEntityByName(name string) (entity []RegisteredEntity) {
+	return o.EntityList.GetEntityByName(name)
+}
+
+func (o *RabbitHomeServer) GetEntitiesByPlatform(platformId string) (entities []RegisteredEntity) {
+	return o.GetEntitiesByPlatform(platformId)
+}
+
+func (o *RabbitHomeServer) AddEntity(entity RegisteredEntity) error {
+	return o.EntityList.AddEntity(entity)
+}
+
+func (o *RabbitHomeServer) RemoveEntity(id string) (entity *RegisteredEntity, ok bool) {
+	return o.EntityList.RemoveEntity(id)
+}
+
+func (o *RabbitHomeServer) UpdateState(state core.EntityState) bool {
+	return o.EntityList.UpdateState(state)
+}
+
+func (o *RabbitHomeServer) UpdateDetailState(detail core.EntityDetailState) bool {
+	return o.EntityList.UpdateDetailState(detail)
+}
+
+func (o *RabbitHomeServer) QuerySmartEntity() (entity RegisteredEntity, ok bool) {
+	return o.EntityList.QuerySmartEntity()
+}
+
+// -------------------------
 
 func (o *RabbitHomeServer) start(addr string) error {
 	if nil == o.HttpServer {

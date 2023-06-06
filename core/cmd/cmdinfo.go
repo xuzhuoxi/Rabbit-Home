@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/xuzhuoxi/Rabbit-Home/src/core/home"
+	"github.com/xuzhuoxi/Rabbit-Home/core/home"
 	"github.com/xuzhuoxi/infra-go/cmdx"
 )
 
@@ -17,12 +17,11 @@ const (
 func OnCmdInfo(flagSet *cmdx.FlagSetExtend, args []string) {
 	id := flagSet.String(infoId, "", "-id=Id")
 	flagSet.Parse(args)
-	nb := flagSet.CheckKey(infoId)
-	if !nb {
+	if *id == "" && !flagSet.CheckKey(infoId) {
 		fmt.Println("Command \"" + flagSet.Name() + "\" args error!")
 		return
 	}
-	entity, ok := home.Server.GetEntityList().GetEntityById(*id)
+	entity, ok := home.Server.GetEntityById(*id)
 	if !ok {
 		return
 	}

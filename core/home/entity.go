@@ -5,7 +5,7 @@ package home
 
 import (
 	"fmt"
-	"github.com/xuzhuoxi/Rabbit-Home/src/core"
+	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"strings"
 	"time"
 )

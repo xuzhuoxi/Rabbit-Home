@@ -5,7 +5,7 @@ package home
 
 import (
 	"encoding/base64"
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 	"net/http"
 )
 

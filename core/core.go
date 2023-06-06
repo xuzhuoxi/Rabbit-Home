@@ -3,7 +3,10 @@
 // @author xuzhuoxi
 package core
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 const (
 	// CmcKeyState 查看服务器状态
@@ -17,7 +20,7 @@ const (
 )
 
 var (
-	LinkedTimeout int64 // 超时时间
+	LinkedTimeout = int64(5 * time.Minute) // 超时时间
 )
 
 // LinkEntity 连接的实例信息

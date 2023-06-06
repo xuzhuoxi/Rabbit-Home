@@ -4,7 +4,7 @@
 package cmd
 
 import (
-	"github.com/xuzhuoxi/Rabbit-Home/src/core"
+	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"github.com/xuzhuoxi/infra-go/cmdx"
 )
 

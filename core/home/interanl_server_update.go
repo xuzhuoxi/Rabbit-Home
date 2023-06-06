@@ -5,7 +5,7 @@ package home
 
 import (
 	"fmt"
-	"github.com/xuzhuoxi/Rabbit-Home/src/core"
+	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"net/http"
 )
 
@@ -26,13 +26,17 @@ func (l *serverUpdateHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 		err = getValueWithGet(request, PatternDataKey, state)
 	}
 	if nil != err {
-		Logger.Warnln(fmt.Sprintf("UpdateState Fail: %v", err))
+		Logger.Warnln(fmt.Sprintf("Update State Fail: %v", err))
 		return
 	}
 	if state.IsNotValid() {
-		Logger.Warnln(fmt.Sprintf("UpdateState Fail: State is not valid. %v", state))
+		Logger.Warnln(fmt.Sprintf("Update State Fail: State is not valid. %v", state))
 		return
 	}
-	Server.GetEntityList().UpdateState(*state)
-	Logger.Infoln(fmt.Sprintf("UpdateState Succ: %v", state))
+	ok := Server.UpdateState(*state)
+	if !ok {
+		Logger.Warnln("Update State Fail: not ok! ")
+		return
+	}
+	Logger.Infoln(fmt.Sprintf("Update State Succ: %v", state))
 }

@@ -5,8 +5,10 @@ package home
 
 import (
 	"flag"
-	"github.com/xuzhuoxi/Rabbit-Home/src/core/conf"
+	"github.com/xuzhuoxi/Rabbit-Home/core"
+	"github.com/xuzhuoxi/Rabbit-Home/core/conf"
 	"github.com/xuzhuoxi/infra-go/filex"
+	"github.com/xuzhuoxi/infra-go/logx"
 	"github.com/xuzhuoxi/infra-go/osxu"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -44,6 +46,9 @@ func initConfigWithFile(filePath string) error {
 	if nil != err {
 		return err
 	}
+	if 0 == cfg.Timeout {
+		cfg.Timeout = core.LinkedTimeout
+	}
 	ServerConfig = cfg
 	return nil
 }
@@ -53,5 +58,15 @@ func initConfigDefault() {
 }
 
 func initConfigWithAddr(addr string) {
-	ServerConfig = &conf.ServerConfig{Http: conf.HttpConfig{Addr: addr}}
+	ServerConfig = &conf.ServerConfig{Http: conf.HttpConfig{Addr: addr}, Timeout: core.LinkedTimeout}
+}
+
+func updateLogger() {
+	logCfg := ServerConfig.Logger
+	if nil == logCfg {
+		return
+	}
+	Logger.RemoveConfig(logx.TypeConsole)
+	Logger.SetConfig(logx.LogConfig{Type: logCfg.Type, Level: logCfg.Level,
+		FilePath: filex.Combine(osxu.GetRunningDir(), logCfg.FilePath), MaxSize: logCfg.Max})
 }

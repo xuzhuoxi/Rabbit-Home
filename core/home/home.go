@@ -4,7 +4,7 @@
 package home
 
 import (
-	"github.com/xuzhuoxi/Rabbit-Home/src/core/conf"
+	"github.com/xuzhuoxi/Rabbit-Home/core/conf"
 	"github.com/xuzhuoxi/infra-go/logx"
 )
 
@@ -17,7 +17,8 @@ const (
 	PatternUpdate = "/update"
 	PatternRoute  = "/route"
 
-	PatternDataKey = "data"
+	PatternDataKey         = "data"
+	PatternEntityWeightKey = "w"
 )
 
 var (
@@ -38,6 +39,7 @@ func StartHomeServer() {
 		Server.Init()
 	}
 	initConfig()
+	updateLogger()
 	err := Server.StartByAddr(ServerConfig.Http.Addr)
 	if nil != err {
 		panic(err)

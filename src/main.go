@@ -4,8 +4,8 @@
 package main
 
 import (
-	"github.com/xuzhuoxi/Rabbit-Home/src/core/cmd"
-	"github.com/xuzhuoxi/Rabbit-Home/src/core/home"
+	"github.com/xuzhuoxi/Rabbit-Home/core/cmd"
+	"github.com/xuzhuoxi/Rabbit-Home/core/home"
 )
 
 func main() {
