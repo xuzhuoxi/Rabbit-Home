@@ -25,6 +25,7 @@ type RegisteredEntity struct {
 	Detail core.EntityDetailState
 
 	lastUpdateNano int64
+	hit            int
 }
 
 func (o *RegisteredEntity) String() string {
@@ -79,4 +80,8 @@ func (o *RegisteredEntity) UpdateDetailState(detail core.EntityDetailState) {
 			o.Detail.StatsInterval = detail.StatsInterval
 		}
 	}
+}
+
+func (o *RegisteredEntity) AddHit() {
+	o.hit += 1
 }

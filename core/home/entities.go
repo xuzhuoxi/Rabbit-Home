@@ -50,6 +50,8 @@ type IEntityStateUpdate interface {
 type IEntityQuery interface {
 	// QuerySmartEntity 查询最好的实例
 	QuerySmartEntity() (entity RegisteredEntity, ok bool)
+	// QueryEntity 根据name与platformId查询最好的实例
+	QueryEntity(name string, platformId string) (entity RegisteredEntity, ok bool)
 }
 
 // IEntityList 实例列表
@@ -204,13 +206,20 @@ func (o *EntityList) UpdateDetailState(detail core.EntityDetailState) bool {
 }
 
 func (o *EntityList) QuerySmartEntity() (entity RegisteredEntity, ok bool) {
-	if len(o.Entities) == 0 {
-		return EntityEmpty, false
-	}
 	o.lock.Lock()
 	defer o.lock.Unlock()
-	sort.Sort(sortLinkList(o.Entities))
-	return *o.Entities[0], true
+	o.clearTimeoutEntities()
+	return o.queryEntities(o.Entities)
+}
+
+func (o *EntityList) QueryEntity(name string, platformId string) (entity RegisteredEntity, ok bool) {
+	o.lock.Lock()
+	defer o.lock.Unlock()
+	o.clearTimeoutEntities()
+	entities := o.getEntities(func(each RegisteredEntity) bool {
+		return each.Name == name && each.PlatformId == platformId
+	})
+	return o.queryEntities(entities)
 }
 
 func (o *EntityList) findEntity(funcEach funcEach) (entity *RegisteredEntity, ok bool) {
@@ -221,4 +230,31 @@ func (o *EntityList) findEntity(funcEach funcEach) (entity *RegisteredEntity, ok
 	}
 	ok = false
 	return
+}
+
+func (o *EntityList) getEntities(funcEach FuncEach) (entities []*RegisteredEntity) {
+	for index := range o.Entities {
+		if funcEach(*o.Entities[index]) {
+			entities = append(entities, o.Entities[index])
+		}
+	}
+	return
+}
+
+func (o *EntityList) queryEntities(entities []*RegisteredEntity) (entity RegisteredEntity, ok bool) {
+	if len(entities) == 0 {
+		return EntityEmpty, false
+	}
+	sort.Sort(sortLinkList(entities))
+	o.Entities[0].AddHit()
+	entity = *o.Entities[0]
+	return entity, true
+}
+
+func (o *EntityList) clearTimeoutEntities() {
+	for index := len(o.Entities) - 1; index >= 0; index -= 1 {
+		if o.Entities[index].IsTimeout() {
+			o.Entities = append(o.Entities[:index], o.Entities[index+1:]...)
+		}
+	}
 }

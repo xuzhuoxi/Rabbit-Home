@@ -138,6 +138,10 @@ func (o *RabbitHomeServer) QuerySmartEntity() (entity RegisteredEntity, ok bool)
 	return o.EntityList.QuerySmartEntity()
 }
 
+func (o *RabbitHomeServer) QueryEntity(name string, platformId string) (entity RegisteredEntity, ok bool) {
+	return o.EntityList.QueryEntity(name, platformId)
+}
+
 // -------------------------
 
 func (o *RabbitHomeServer) start(addr string) error {
@@ -172,7 +176,10 @@ func (o sortWeightList) Less(i, j int) bool {
 	bi := o[i].IsTimeout()
 	bj := o[j].IsTimeout()
 	if bi == bj {
-		return o[i].State.Weight < o[j].State.Weight
+		if o[i].State.Weight != o[j].State.Weight {
+			return o[i].State.Weight < o[j].State.Weight
+		}
+		return o[i].hit < o[j].hit
 	} else {
 		return bj
 	}
@@ -189,7 +196,10 @@ func (o sortLinkList) Len() int {
 }
 
 func (o sortLinkList) Less(i, j int) bool {
-	return o[i].Detail.Links < o[j].Detail.Links
+	if o[i].Detail.Links != o[j].Detail.Links {
+		return o[i].Detail.Links < o[j].Detail.Links
+	}
+	return o[i].hit < o[j].hit
 }
 
 func (o sortLinkList) Swap(i, j int) {

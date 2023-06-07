@@ -25,9 +25,9 @@ var (
 
 // LinkEntity 连接的实例信息
 type LinkEntity struct {
-	Id         string `json:"id"`      // 实例Id
+	Id         string `json:"id"`      // 实例Id(唯一)
 	PlatformId string `json:"pid"`     // 平台Id
-	Name       string `json:"name"`    // 实例名称
+	Name       string `json:"name"`    // 实例名称(不唯一)
 	Network    string `json:"network"` // 连接类型
 	Addr       string `json:"addr"`    // 连接地址
 }
@@ -83,4 +83,14 @@ func (o *EntityDetailState) String() string {
 // IsNotValid 是否为未验证
 func (o *EntityDetailState) IsNotValid() bool {
 	return len(o.Id) == 0
+}
+
+type HttpRequestQueryEntity struct {
+	Name       string `json:"name"`
+	PlatformId string `json:"pid"`
+}
+
+type HttpResponse struct {
+	Status int    `json:"status"`
+	Value  string `json:"value"` // 通过为通过base64转化的josn字符器
 }
