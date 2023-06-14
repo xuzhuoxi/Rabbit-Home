@@ -126,11 +126,11 @@ func (o *RabbitHomeServer) RemoveEntity(id string) (entity *RegisteredEntity, ok
 	return o.EntityList.RemoveEntity(id)
 }
 
-func (o *RabbitHomeServer) UpdateState(state core.EntityState) bool {
+func (o *RabbitHomeServer) UpdateState(state core.EntityStatus) bool {
 	return o.EntityList.UpdateState(state)
 }
 
-func (o *RabbitHomeServer) UpdateDetailState(detail core.EntityDetailState) bool {
+func (o *RabbitHomeServer) UpdateDetailState(detail core.EntityDetailStatus) bool {
 	return o.EntityList.UpdateDetailState(detail)
 }
 

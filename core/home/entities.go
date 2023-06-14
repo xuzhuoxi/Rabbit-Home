@@ -41,9 +41,9 @@ type IEntitySetter interface {
 // IEntityStateUpdate 更新实例状态接口
 type IEntityStateUpdate interface {
 	// UpdateState 更新实例状态信息
-	UpdateState(state core.EntityState) bool
+	UpdateState(state core.EntityStatus) bool
 	// UpdateDetailState 更新实例状态详细信息
-	UpdateDetailState(detail core.EntityDetailState) bool
+	UpdateDetailState(detail core.EntityDetailStatus) bool
 }
 
 // IEntityQuery 查询实例接口
@@ -173,7 +173,7 @@ func (o *EntityList) RemoveEntity(id string) (entity *RegisteredEntity, ok bool)
 	return
 }
 
-func (o *EntityList) UpdateState(state core.EntityState) bool {
+func (o *EntityList) UpdateState(state core.EntityStatus) bool {
 	if state.IsNotValid() {
 		return false
 	}
@@ -189,7 +189,7 @@ func (o *EntityList) UpdateState(state core.EntityState) bool {
 	return false
 }
 
-func (o *EntityList) UpdateDetailState(detail core.EntityDetailState) bool {
+func (o *EntityList) UpdateDetailState(detail core.EntityDetailStatus) bool {
 	if detail.IsNotValid() {
 		return false
 	}

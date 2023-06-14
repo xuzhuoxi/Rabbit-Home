@@ -18,7 +18,7 @@ type serverUpdateHandler struct {
 }
 
 func (l *serverUpdateHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	state := &core.EntityState{}
+	state := &core.EntityStatus{}
 	var err error
 	if l.post {
 		err = getValueWithPost(request, PatternDataKey, state)

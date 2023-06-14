@@ -61,7 +61,7 @@ type LoggerConfig struct {
 }
 type ServerConfig struct {
 	Http     HttpConfig    `yaml:"http"`     // Http服务
-	Internal *IpControl    `yaml:"internal"` // 内部Ip控制
+	Internal *IpControl    `yaml:"rabbit"`   // 内部Ip控制
 	External *IpControl    `yaml:"external"` // 外部IP控制
 	Timeout  int64         `yaml:"timeout"`  // 超时参数
 	Logger   *LoggerConfig `yaml:"logger"`   // 日志记录参数

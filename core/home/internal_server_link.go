@@ -51,7 +51,7 @@ func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 			Logger.Warnln(fmt.Sprintf("Update State After Link Fail: %v", err))
 			return
 		}
-		state := core.EntityState{Id: linkEntity.Id, Weight: weight}
+		state := core.EntityStatus{Id: linkEntity.Id, Weight: weight}
 		Server.UpdateState(state)
 		Logger.Warnln(fmt.Sprintf("Update State After Link Succ: %s", state.String()))
 	}

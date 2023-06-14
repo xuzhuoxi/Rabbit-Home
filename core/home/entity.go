@@ -21,8 +21,8 @@ func NewRegisteredEntity(entity core.LinkEntity) *RegisteredEntity {
 // RegisteredEntity 已注册实例
 type RegisteredEntity struct {
 	core.LinkEntity
-	State  core.EntityState
-	Detail core.EntityDetailState
+	State  core.EntityStatus
+	Detail core.EntityDetailStatus
 
 	lastUpdateNano int64
 	hit            int
@@ -45,12 +45,12 @@ func (o *RegisteredEntity) IsTimeout() bool {
 }
 
 // UpdateState 更新实例状态信息
-func (o *RegisteredEntity) UpdateState(state core.EntityState) {
+func (o *RegisteredEntity) UpdateState(state core.EntityStatus) {
 	o.State.Weight = state.Weight
 }
 
 // UpdateDetailState 更新实例详细状态信息
-func (o *RegisteredEntity) UpdateDetailState(detail core.EntityDetailState) {
+func (o *RegisteredEntity) UpdateDetailState(detail core.EntityDetailStatus) {
 	if o.Id != detail.Id || len(detail.Keys) == 0 {
 		return
 	}
