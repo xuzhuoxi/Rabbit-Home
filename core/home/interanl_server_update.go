@@ -26,17 +26,21 @@ func (l *serverUpdateHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 		err = getValueWithGet(request, PatternDataKey, state)
 	}
 	if nil != err {
-		Logger.Warnln(fmt.Sprintf("Update State Fail: %v", err))
+		warnInfo := fmt.Sprintf("Update State Fail: %v", err)
+		warnAndResponse(writer, http.StatusBadRequest, warnInfo, Logger)
 		return
 	}
 	if state.IsNotValid() {
-		Logger.Warnln(fmt.Sprintf("Update State Fail: State is not valid. %v", state))
+		warnInfo := fmt.Sprintf("Update State Fail: State is not valid. %v", state)
+		warnAndResponse(writer, http.StatusBadRequest, warnInfo, Logger)
 		return
 	}
 	ok := Server.UpdateState(*state)
 	if !ok {
-		Logger.Warnln("Update State Fail: not ok! ", *state)
+		warnInfo := fmt.Sprintf("Update State Fail: Id[%s] unregistered! ", state.Id)
+		warnAndResponse(writer, http.StatusNotFound, warnInfo, Logger)
 		return
 	}
+	writer.WriteHeader(http.StatusOK)
 	Logger.Infoln(fmt.Sprintf("Update State Succ: %v", state))
 }

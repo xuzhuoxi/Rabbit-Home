@@ -28,12 +28,12 @@ func UnlinkWithGet(httpUrl string, id string) error {
 	return netx.HttpGet(httpUrl, nil)
 }
 
-func UpdateWithGet(httpUrl string, info core.EntityStatus) error {
+func UpdateWithGet(httpUrl string, info core.EntityStatus, cb netx.ReqCallBack) error {
 	bs, err := jsoniter.Marshal(info)
 	if nil != err {
 		return err
 	}
 	data := base64.StdEncoding.EncodeToString(bs)
 	httpUrl = fmt.Sprintf("%s?%s=%s", httpUrl, home.PatternDataKey, data)
-	return netx.HttpGet(httpUrl, nil)
+	return netx.HttpGet(httpUrl, cb)
 }

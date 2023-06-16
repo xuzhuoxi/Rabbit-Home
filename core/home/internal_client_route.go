@@ -4,7 +4,6 @@
 package home
 
 import (
-	"encoding/base64"
 	"fmt"
 	"github.com/json-iterator/go"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
@@ -30,21 +29,19 @@ func (l *clientRouteHandler) ServeHTTP(writer http.ResponseWriter, request *http
 		}
 	}
 	if nil != err {
-		Logger.Warnln(fmt.Sprintf("Qurey Fail: %v", err))
+		warnInfo := fmt.Sprintf("Qurey Fail: %v", err)
+		warnAndResponse(writer, http.StatusBadRequest, warnInfo, Logger)
 		return
 	}
 	entity, ok := Server.QueryEntity(query.Name, query.PlatformId)
-	resp := &core.HttpResponse{}
 	if !ok {
-		resp.Status = StatusNotFound
-		Logger.Warnln(fmt.Sprintf("Query Fail from %s!", request.RemoteAddr))
-	} else {
-		resp.Status = StatusFound
-		bs, _ := jsoniter.Marshal(entity)
-		value := base64.StdEncoding.EncodeToString(bs)
-		resp.Value = value
-		Logger.Warnln(fmt.Sprintf("Query Succ from %s. Return %s", request.RemoteAddr, entity.Id))
+		warnInfo := fmt.Sprintf("Query Fail from %s!", request.RemoteAddr)
+		warnAndResponse(writer, http.StatusNotFound, warnInfo, Logger)
+		return
 	}
-	rs, _ := jsoniter.Marshal(resp)
-	writer.Write(rs)
+	writer.WriteHeader(http.StatusOK)
+	bs, _ := jsoniter.Marshal(entity)
+	value := []byte(toBase64(bs))
+	writer.Write(value)
+	Logger.Infoln(fmt.Sprintf("Query Succ from %s. Return %s", request.RemoteAddr, entity.Id))
 }

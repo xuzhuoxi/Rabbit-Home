@@ -17,20 +17,25 @@ type serverUnlinkHandler struct {
 }
 
 func (l *serverUnlinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	id := ""
+	var bsId []byte
 	var err error
 	if l.post {
-		id, err = getStringWithPost(request, PatternDataKey)
+		bsId, err = getStringWithPost(request, PatternDataKey)
 	} else {
-		id, err = getStringWithGet(request, PatternDataKey)
+		bsId, err = getStringWithGet(request, PatternDataKey)
 	}
 	if nil != err {
+		warnInfo := fmt.Sprintf("Unlink Entity Fail: %v", err)
+		warnAndResponse(writer, http.StatusBadRequest, warnInfo, Logger)
 		return
 	}
+	id := string(bsId)
 	entity, ok := Server.RemoveEntity(id)
 	if !ok || nil == entity {
-		Logger.Warnln(fmt.Sprintf("Unlink Entity(%s) fail! Entity is not exist!", id))
+		warnInfo := fmt.Sprintf("Unlink Entity(%s) fail! Entity is not exist!", bsId)
+		warnAndResponse(writer, http.StatusNotFound, warnInfo, Logger)
 		return
 	}
-	fmt.Println(fmt.Sprintf("Unlink Entity(%s) Succ!", id))
+	writer.WriteHeader(http.StatusOK)
+	fmt.Println(fmt.Sprintf("Unlink Entity(%s) Succ!", bsId))
 }

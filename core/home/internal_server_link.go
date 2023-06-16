@@ -30,11 +30,13 @@ func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 		weightStr = request.FormValue(PatternEntityWeightKey)
 	}
 	if nil != err0 {
-		Logger.Warnln(fmt.Sprintf("Link Entity Fail: %v", err0))
+		warnInfo := fmt.Sprintf("Link Entity Fail: %v", err0)
+		warnAndResponse(writer, http.StatusBadRequest, warnInfo, Logger)
 		return
 	}
 	if linkEntity.IsNotValid() {
-		Logger.Warnln(fmt.Sprintf("Link Entity Fail: Entity is not valid. %v", linkEntity))
+		warnInfo := fmt.Sprintf("Link Entity Fail: Entity is not valid. %v", linkEntity)
+		warnAndResponse(writer, http.StatusBadRequest, warnInfo, Logger)
 		return
 	}
 	entity := NewRegisteredEntity(*linkEntity)
@@ -42,13 +44,15 @@ func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 	if nil != err1 {
 		err2 := Server.ReplaceEntity(*entity)
 		if nil != err2 {
-			Logger.Warnln(fmt.Sprintf("Link Entity Fail: %v", err2))
+			warnInfo := fmt.Sprintf("Link Entity Fail: %v", err2)
+			warnAndResponse(writer, http.StatusBadRequest, warnInfo, Logger)
 			return
 		}
 		Logger.Infoln(fmt.Sprintf("Relink Entity Succ: %v", linkEntity))
 	} else {
 		Logger.Infoln(fmt.Sprintf("Link Entity Succ: %v", linkEntity))
 	}
+	writer.WriteHeader(http.StatusOK)
 
 	if weightStr != "" {
 		weight, err := strconv.ParseFloat(weightStr, 64)
