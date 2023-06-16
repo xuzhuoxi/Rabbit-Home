@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func NewServerUpdateHandler() http.Handler {
+func newServerUpdateHandler() http.Handler {
 	return &serverUpdateHandler{post: serverPost}
 }
 
@@ -35,7 +35,7 @@ func (l *serverUpdateHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 	}
 	ok := Server.UpdateState(*state)
 	if !ok {
-		Logger.Warnln("Update State Fail: not ok! ")
+		Logger.Warnln("Update State Fail: not ok! ", *state)
 		return
 	}
 	Logger.Infoln(fmt.Sprintf("Update State Succ: %v", state))

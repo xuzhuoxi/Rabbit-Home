@@ -60,8 +60,8 @@ func (o *RabbitHomeServer) Init() {
 	o.HttpServer = netx.NewHttpServer().(*netx.HttpServer)
 	o.HttpServer.MapHandle(PatternLink, newServerLinkHandler())
 	o.HttpServer.MapHandle(PatternUnlink, newServerUnlinkHandler())
-	o.HttpServer.MapHandle(PatternUpdate, NewServerUpdateHandler())
-	o.HttpServer.MapHandle(PatternRoute, NewClientRouteHandler())
+	o.HttpServer.MapHandle(PatternUpdate, newServerUpdateHandler())
+	o.HttpServer.MapHandle(PatternRoute, newClientRouteHandler())
 }
 
 func (o *RabbitHomeServer) MapHandle(pattern string, handler http.Handler) {
@@ -120,6 +120,10 @@ func (o *RabbitHomeServer) GetEntitiesByPlatform(platformId string) (entities []
 
 func (o *RabbitHomeServer) AddEntity(entity RegisteredEntity) error {
 	return o.EntityList.AddEntity(entity)
+}
+
+func (o *RabbitHomeServer) ReplaceEntity(entity RegisteredEntity) error {
+	return o.EntityList.ReplaceEntity(entity)
 }
 
 func (o *RabbitHomeServer) RemoveEntity(id string) (entity *RegisteredEntity, ok bool) {

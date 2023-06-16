@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-func NewClientRouteHandler() http.Handler {
+func newClientRouteHandler() http.Handler {
 	return &clientRouteHandler{post: clientPost}
 }
 

@@ -34,6 +34,8 @@ type IEntityGetter interface {
 type IEntitySetter interface {
 	// AddEntity 添加实例
 	AddEntity(entity RegisteredEntity) error
+	// ReplaceEntity 替换实例
+	ReplaceEntity(entity RegisteredEntity) error
 	// RemoveEntity 移除实例
 	RemoveEntity(id string) (entity *RegisteredEntity, ok bool)
 }
@@ -84,13 +86,13 @@ func (o *EntityList) GetEntityById(id string) (entity RegisteredEntity, ok bool)
 	}
 	o.lock.RLock()
 	defer o.lock.RUnlock()
-	found, ok := o.findEntity(func(each *RegisteredEntity) bool {
+	found, idx := o.findEntity(func(each *RegisteredEntity) bool {
 		if each.Id == id {
 			return true
 		}
 		return false
 	})
-	if ok {
+	if idx != -1 {
 		return *found, true
 	}
 	return EntityEmpty, false
@@ -146,14 +148,31 @@ func (o *EntityList) AddEntity(entity RegisteredEntity) error {
 	}
 	o.lock.Lock()
 	defer o.lock.Unlock()
-	_, ok := o.findEntity(func(each *RegisteredEntity) bool {
-		return each.Id == entity.Id || each.Name == entity.Name
+	_, index := o.findEntity(func(each *RegisteredEntity) bool {
+		return each.Id == entity.Id
 	})
-	if ok {
+	if index != -1 {
 		return errors.New("AddEntity Error: Duplicate Entity exist! ")
 	}
 	newEntity := entity
 	o.Entities = append(o.Entities, &newEntity)
+	return nil
+}
+
+func (o *EntityList) ReplaceEntity(entity RegisteredEntity) error {
+	if entity.IsNotValid() {
+		return errors.New("ReplaceEntity Error: Entity not valid! ")
+	}
+	o.lock.Lock()
+	defer o.lock.Unlock()
+	_, index := o.findEntity(func(each *RegisteredEntity) bool {
+		return each.Id == entity.Id
+	})
+	if index == -1 {
+		return errors.New("ReplaceEntity Error: No Entity exist! ")
+	}
+	newEntity := entity
+	o.Entities[index] = &newEntity
 	return nil
 }
 
@@ -179,10 +198,10 @@ func (o *EntityList) UpdateState(state core.EntityStatus) bool {
 	}
 	o.lock.Lock()
 	defer o.lock.Unlock()
-	entity, ok := o.findEntity(func(each *RegisteredEntity) bool {
+	entity, index := o.findEntity(func(each *RegisteredEntity) bool {
 		return each.Id == state.Id
 	})
-	if ok {
+	if index != -1 {
 		entity.UpdateState(state)
 		return true
 	}
@@ -195,10 +214,10 @@ func (o *EntityList) UpdateDetailState(detail core.EntityDetailStatus) bool {
 	}
 	o.lock.Lock()
 	defer o.lock.Unlock()
-	entity, ok := o.findEntity(func(each *RegisteredEntity) bool {
+	entity, index := o.findEntity(func(each *RegisteredEntity) bool {
 		return each.Id == detail.Id
 	})
-	if ok {
+	if index != -1 {
 		entity.UpdateDetailState(detail)
 		return true
 	}
@@ -222,13 +241,13 @@ func (o *EntityList) QueryEntity(name string, platformId string) (entity Registe
 	return o.queryEntities(entities)
 }
 
-func (o *EntityList) findEntity(funcEach funcEach) (entity *RegisteredEntity, ok bool) {
+func (o *EntityList) findEntity(funcEach funcEach) (entity *RegisteredEntity, index int) {
 	for index := range o.Entities {
 		if funcEach(o.Entities[index]) {
-			return o.Entities[index], true
+			return o.Entities[index], index
 		}
 	}
-	ok = false
+	index = -1
 	return
 }
 

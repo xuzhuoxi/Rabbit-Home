@@ -12,7 +12,7 @@ external:
 # 5分钟
 timeout: 300000000000
 log:
-  type: 1   # 0:Console 1:RollingFile 2:DailyFile 3:DailyRollingFile
+  type: 0   # 0:Console 1:RollingFile 2:DailyFile 3:DailyRollingFile
   level: 2  # 0:All 1:Trace 2:Debug 3:Info 4:Warn 5:Error 6:Fatal 7:Off
   path: "RabbitHome.log"
   size: '1MB' # 1MB

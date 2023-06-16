@@ -21,13 +21,13 @@ type serverLinkHandler struct {
 func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	linkEntity := &core.LinkEntity{}
 	var err0 error
-	var weigthStr string
+	var weightStr string
 	if l.post {
 		err0 = getValueWithPost(request, PatternDataKey, linkEntity)
-		weigthStr = request.PostFormValue(PatternEntityWeightKey)
+		weightStr = request.PostFormValue(PatternEntityWeightKey)
 	} else {
 		err0 = getValueWithGet(request, PatternDataKey, linkEntity)
-		weigthStr = request.FormValue(PatternEntityWeightKey)
+		weightStr = request.FormValue(PatternEntityWeightKey)
 	}
 	if nil != err0 {
 		Logger.Warnln(fmt.Sprintf("Link Entity Fail: %v", err0))
@@ -38,21 +38,26 @@ func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 		return
 	}
 	entity := NewRegisteredEntity(*linkEntity)
-	err := Server.AddEntity(*entity)
-	if nil != err {
-		Logger.Warnln(fmt.Sprintf("Link Entity Fail: %v", err))
-		return
+	err1 := Server.AddEntity(*entity)
+	if nil != err1 {
+		err2 := Server.ReplaceEntity(*entity)
+		if nil != err2 {
+			Logger.Warnln(fmt.Sprintf("Link Entity Fail: %v", err2))
+			return
+		}
+		Logger.Infoln(fmt.Sprintf("Relink Entity Succ: %v", linkEntity))
+	} else {
+		Logger.Infoln(fmt.Sprintf("Link Entity Succ: %v", linkEntity))
 	}
-	Logger.Infoln(fmt.Sprintf("Link Entity Succ: %v", linkEntity))
 
-	if weigthStr != "" {
-		weight, err := strconv.ParseFloat(weigthStr, 64)
+	if weightStr != "" {
+		weight, err := strconv.ParseFloat(weightStr, 64)
 		if nil != err {
 			Logger.Warnln(fmt.Sprintf("Update State After Link Fail: %v", err))
 			return
 		}
 		state := core.EntityStatus{Id: linkEntity.Id, Weight: weight}
 		Server.UpdateState(state)
-		Logger.Warnln(fmt.Sprintf("Update State After Link Succ: %s", state.String()))
+		Logger.Infoln(fmt.Sprintf("Update State After Link Succ: %s", state.String()))
 	}
 }

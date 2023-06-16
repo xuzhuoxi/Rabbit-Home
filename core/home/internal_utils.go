@@ -15,31 +15,42 @@ const (
 )
 
 func getValueWithPost(request *http.Request, key string, value interface{}) error {
-	if err := request.ParseForm(); err != nil {
+	str, err := getStringWithPost(request, key)
+	if nil != err {
 		return err
 	}
-	val := []byte(request.PostFormValue(key))
-	return jsoniter.Unmarshal(val, value)
+	return jsoniter.Unmarshal([]byte(str), value)
 }
 
 func getStringWithPost(request *http.Request, key string) (value string, err error) {
 	if err := request.ParseForm(); err != nil {
 		return "", err
 	}
-	return request.PostFormValue(key), nil
+	val, err1 := fromBase64(request.PostFormValue(key))
+	if nil != err1 {
+		return "", err1
+	}
+	return val, nil
 }
 
 func getValueWithGet(request *http.Request, key string, value interface{}) error {
-	val, err := fromBase64(request.FormValue(key))
+	str, err := getStringWithGet(request, key)
 	if nil != err {
 		return err
 	}
-	return jsoniter.Unmarshal([]byte(val), value)
+	return jsoniter.Unmarshal([]byte(str), value)
 }
 
 func getStringWithGet(request *http.Request, key string) (value string, err error) {
-	val := request.FormValue(key)
-	return fromBase64(val)
+	base64Str := request.FormValue(key)
+	if len(base64Str) == 0 {
+		return "", nil
+	}
+	val, err1 := fromBase64(base64Str)
+	if nil != err1 {
+		return "", err1
+	}
+	return val, nil
 }
 
 func fromBase64(base64Str string) (str string, err error) {
