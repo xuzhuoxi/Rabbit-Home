@@ -62,11 +62,10 @@ func initConfigWithAddr(addr string) {
 }
 
 func updateLogger() {
-	logCfg := ServerConfig.Logger
-	if nil == logCfg {
+	cfgLog := ServerConfig.CfgLog
+	if nil == cfgLog {
 		return
 	}
 	Logger.RemoveConfig(logx.TypeConsole)
-	Logger.SetConfig(logx.LogConfig{Type: logCfg.Type, Level: logCfg.Level,
-		FilePath: filex.Combine(osxu.GetRunningDir(), logCfg.FilePath), MaxSize: logCfg.Max})
+	Logger.SetConfig(cfgLog.ToLogConfig())
 }
