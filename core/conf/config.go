@@ -3,48 +3,15 @@
 // @author xuzhuoxi
 package conf
 
-import "github.com/xuzhuoxi/infra-go/logx"
-
-const (
-	SepIp      = ","
-	SepIpRange = "-"
+import (
+	"github.com/xuzhuoxi/infra-go/logx"
 )
 
-type IpControl struct {
-	AllowIPs []string `yaml:"allows"`    // IP白名单
-	AllowOn  bool     `yaml:"allow_on"`  // 是否启用白名单
-	BlockIPs []string `yaml:"blocks"`    // IP黑名单
-	BlockOn  bool     `yaml:"blocks_on"` // 是否启用黑名单
-
-	allowIps []*ipGroup
-	blockIps []*ipGroup
-}
-
-func (o *IpControl) Check(ipAddr string) bool {
-	if len(ipAddr) == 0 {
-		return false
-	}
-	group := newIPGroupFromAddr(ipAddr)
-	if o.BlockOn && o.contains(o.blockIps, group) {
-		return false
-	}
-	if o.AllowOn && !o.contains(o.allowIps, group) {
-		return false
-	}
-	return true
-}
-
-func (o *IpControl) contains(ipGroupArr []*ipGroup, ipGroup *ipGroup) bool {
-	if len(ipGroupArr) == 0 || ipGroup == nil {
-		return false
-	}
-	for index := range ipGroupArr {
-		if !ipGroupArr[index].ContainsGroup(ipGroup) {
-			return false
-		}
-	}
-	return true
-}
+const (
+	SepIp      = "."
+	SepIp6     = ":"
+	SepIpRange = "-"
+)
 
 type HttpConfig struct {
 	Addr string `yaml:"addr"` // 服务器启动监听地址
@@ -52,41 +19,43 @@ type HttpConfig struct {
 
 type ServerConfig struct {
 	Http     HttpConfig   `yaml:"http"`     // Http服务
-	Internal *IpControl   `yaml:"rabbit"`   // 内部Ip控制
-	External *IpControl   `yaml:"external"` // 外部IP控制
+	Internal *IpVerifier  `yaml:"internal"` // 内部Ip控制
+	External *IpVerifier  `yaml:"external"` // 外部IP控制
 	Timeout  int64        `yaml:"timeout"`  // 超时参数
 	CfgLog   *logx.CfgLog `yaml:"log"`      // 日志记录参数
 }
 
+// PreProcess 预处理
 func (o *ServerConfig) PreProcess() {
 	if o.Internal != nil {
-		if o.Internal.AllowOn {
-			o.Internal.allowIps = newMultiIPGroupFromAddr(o.Internal.AllowIPs)
-		}
-		if o.Internal.BlockOn {
-			o.Internal.blockIps = newMultiIPGroupFromAddr(o.Internal.BlockIPs)
-		}
+		o.Internal.PreProcess()
 	}
 	if o.External != nil {
-		if o.External.AllowOn {
-			o.External.allowIps = newMultiIPGroupFromAddr(o.External.AllowIPs)
-		}
-		if o.External.BlockOn {
-			o.External.blockIps = newMultiIPGroupFromAddr(o.External.BlockIPs)
-		}
+		o.External.PreProcess()
 	}
 }
 
-func (o *ServerConfig) CheckInternalIP(ipAddr string) bool {
+// VerifyInternalIP 检查是否为内部IP
+func (o *ServerConfig) VerifyInternalIP(ipAddr string) bool {
+	if len(ipAddr) == 0 {
+		return false
+	}
 	if nil == o.Internal {
 		return true
 	}
-	return o.Internal.Check(ipAddr)
+	return o.Internal.CheckIpAddr(ipAddr)
 }
 
-func (o *ServerConfig) CheckExternalIP(ipAddr string) bool {
+// VerifyExternalIP 检查是否为外部IP
+func (o *ServerConfig) VerifyExternalIP(ipAddr string) bool {
+	if len(ipAddr) == 0 {
+		return false
+	}
+	if len(ipAddr) == 0 {
+		return false
+	}
 	if nil == o.External {
 		return true
 	}
-	return o.External.Check(ipAddr)
+	return o.External.CheckIpAddr(ipAddr)
 }

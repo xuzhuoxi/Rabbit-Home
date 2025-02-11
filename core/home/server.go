@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-// IRabbitHomeServer 服务器接口
+// IRabbitHomeServer Rabbit-Home 服务器接口
 type IRabbitHomeServer interface {
 	// Init 初始化
 	Init()
@@ -35,6 +35,8 @@ type IRabbitHomeServer interface {
 	IEntityQuery
 }
 
+// NewRabbitHomeServer
+// 创建一个 Rabbit-Home 服务器实例
 func NewRabbitHomeServer() IRabbitHomeServer {
 	return &RabbitHomeServer{EntityList: NewEntityList()}
 }

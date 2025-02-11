@@ -18,6 +18,9 @@ type serverUpdateHandler struct {
 }
 
 func (l *serverUpdateHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if !ServerConfig.VerifyInternalIP(getClientIpAddr(request)) { // 验证是否内部IP
+		return
+	}
 	state := &core.EntityStatus{}
 	var err error
 	if l.post {
@@ -42,5 +45,5 @@ func (l *serverUpdateHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 		return
 	}
 	writer.WriteHeader(http.StatusOK)
-	Logger.Infoln(fmt.Sprintf("Update State Succ: %v", state))
+	Logger.Infoln("[serverUpdateHandler.ServeHTTP]", fmt.Sprintf("Update State Succ: %v", state))
 }

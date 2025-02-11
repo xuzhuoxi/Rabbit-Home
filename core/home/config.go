@@ -49,6 +49,7 @@ func initConfigWithFile(filePath string) error {
 	if 0 == cfg.Timeout {
 		cfg.Timeout = core.LinkedTimeout
 	}
+	cfg.PreProcess()
 	ServerConfig = cfg
 	return nil
 }

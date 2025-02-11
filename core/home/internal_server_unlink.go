@@ -17,6 +17,9 @@ type serverUnlinkHandler struct {
 }
 
 func (l *serverUnlinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if !ServerConfig.VerifyInternalIP(getClientIpAddr(request)) { // 验证是否内部IP
+		return
+	}
 	var bsId []byte
 	var err error
 	if l.post {

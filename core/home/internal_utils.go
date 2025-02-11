@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"github.com/json-iterator/go"
 	"github.com/xuzhuoxi/infra-go/logx"
+	"net"
 	"net/http"
 )
 
@@ -18,7 +19,7 @@ const (
 var empty = []byte("")
 
 func warnAndResponse(writer http.ResponseWriter, statusCode int, warnInfo string, logger logx.ILogger) {
-	logger.Warnln(warnInfo)
+	logger.Warnln("[warnAndResponse]", warnInfo)
 	writer.WriteHeader(statusCode)
 	writer.Write([]byte(warnInfo))
 }
@@ -72,4 +73,18 @@ func fromBase64(base64Str string) (value []byte, err error) {
 
 func toBase64(bs []byte) (base64Str string) {
 	return base64.StdEncoding.EncodeToString(bs)
+}
+
+func getClientIpAddr(req *http.Request) string {
+	// 从X-Forwarded-For请求头获取
+	ip := req.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		// 从X-Real-IP请求头获取
+		ip = req.Header.Get("X-Real-IP")
+	}
+	if ip == "" {
+		// 如果请求头中没有，直接从RemoteAddr获取
+		ip, _, _ = net.SplitHostPort(req.RemoteAddr)
+	}
+	return ip
 }

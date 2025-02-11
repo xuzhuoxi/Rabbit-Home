@@ -93,5 +93,5 @@ type HttpRequestQueryEntity struct {
 
 type HttpResponse struct {
 	Status int    `json:"status"`
-	Value  string `json:"value"` // 通过为通过base64转化的josn字符器
+	Value  string `json:"value"` // 通常为通过base64转化的josn字符器
 }

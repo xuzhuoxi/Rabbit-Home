@@ -10,8 +10,8 @@ import (
 	"sync"
 )
 
-type FuncEach func(each RegisteredEntity) bool
-type funcEach func(each *RegisteredEntity) bool
+type FuncEach = func(each RegisteredEntity) bool
+type funcEach = func(each *RegisteredEntity) bool
 
 type IEntitySize interface {
 	// Size 实例数量

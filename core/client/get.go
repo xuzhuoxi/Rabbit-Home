@@ -12,6 +12,10 @@ import (
 	"github.com/xuzhuoxi/infra-go/netx"
 )
 
+// LinkWithGet 连接到 Rabbit-Home 服务器
+// httpUrl: http请求连接
+// info: 本地服务器基本信息
+// weight: 权重
 func LinkWithGet(httpUrl string, info core.LinkEntity, weight float64) error {
 	bs, err := jsoniter.Marshal(info)
 	if nil != err {

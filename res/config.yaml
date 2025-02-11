@@ -6,11 +6,16 @@ internal:
   blocks_on: false
   blocks:
     - "192.168.0.1"
+    - "10.0.0.1-20"
+    - "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+    - "2001:db8:85a3::8a2e:370:7334"
+    - "2001:0db8:85a3:0000:0000:8a2e:0370:0-7334"
+    - "2001:0db8:85a3:0000:0000:8a2e:0370:0-7334"
 external:
   allows_on: false
   blocks_on: false
 # 5分钟
-timeout: 300000000000
+timeout: 300000000000e
 log:
   type: 0   # 0:Console 1:RollingFile 2:DailyFile 3:DailyRollingFile
   level: 2  # 0:All 1:Trace 2:Debug 3:Info 4:Warn 5:Error 6:Fatal 7:Off

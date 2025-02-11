@@ -19,6 +19,10 @@ type clientRouteHandler struct {
 }
 
 func (l *clientRouteHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if !ServerConfig.VerifyExternalIP(getClientIpAddr(request)) { // 验证是否外部IP
+		return
+	}
+
 	query := &core.HttpRequestQueryEntity{}
 	var err error
 	if l.post {
@@ -43,5 +47,5 @@ func (l *clientRouteHandler) ServeHTTP(writer http.ResponseWriter, request *http
 	bs, _ := jsoniter.Marshal(entity)
 	value := []byte(toBase64(bs))
 	writer.Write(value)
-	Logger.Infoln(fmt.Sprintf("Query Succ from %s. Return %s", request.RemoteAddr, entity.Id))
+	Logger.Infoln("[clientRouteHandler.ServeHTTP]", fmt.Sprintf("Query Succ from %s. Return %s", request.RemoteAddr, entity.Id))
 }

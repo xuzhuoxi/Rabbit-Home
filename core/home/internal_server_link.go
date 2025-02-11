@@ -19,6 +19,10 @@ type serverLinkHandler struct {
 }
 
 func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if !ServerConfig.VerifyInternalIP(getClientIpAddr(request)) { // 验证是否内部IP
+		return
+	}
+	funcName := "[serverLinkHandler.ServeHTTP]"
 	linkEntity := &core.LinkEntity{}
 	var err0 error
 	var weightStr string
@@ -48,20 +52,20 @@ func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 			warnAndResponse(writer, http.StatusBadRequest, warnInfo, Logger)
 			return
 		}
-		Logger.Infoln(fmt.Sprintf("Relink Entity Succ: %v", linkEntity))
+		Logger.Infoln(funcName, fmt.Sprintf("Relink Entity Succ: %v", linkEntity))
 	} else {
-		Logger.Infoln(fmt.Sprintf("Link Entity Succ: %v", linkEntity))
+		Logger.Infoln(funcName, fmt.Sprintf("Link Entity Succ: %v", linkEntity))
 	}
 	writer.WriteHeader(http.StatusOK)
 
 	if weightStr != "" {
 		weight, err := strconv.ParseFloat(weightStr, 64)
 		if nil != err {
-			Logger.Warnln(fmt.Sprintf("Update State After Link Fail: %v", err))
+			Logger.Warnln(funcName, fmt.Sprintf("Update State After Link Fail: %v", err))
 			return
 		}
 		state := core.EntityStatus{Id: linkEntity.Id, Weight: weight}
 		Server.UpdateState(state)
-		Logger.Infoln(fmt.Sprintf("Update State After Link Succ: %s", state.String()))
+		Logger.Infoln(funcName, fmt.Sprintf("Update State After Link Succ: %s", state.String()))
 	}
 }

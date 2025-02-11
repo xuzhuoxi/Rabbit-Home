@@ -21,11 +21,11 @@ func NewRegisteredEntity(entity core.LinkEntity) *RegisteredEntity {
 // RegisteredEntity 已注册实例
 type RegisteredEntity struct {
 	core.LinkEntity
-	State  core.EntityStatus
-	Detail core.EntityDetailStatus
+	State  core.EntityStatus       // 实例简单状态
+	Detail core.EntityDetailStatus // 实例详细状态
 
-	lastUpdateNano int64
-	hit            int
+	lastUpdateNano int64 // 上一次更新时间戳
+	hit            int   // 命中次数
 }
 
 func (o *RegisteredEntity) String() string {
@@ -82,6 +82,7 @@ func (o *RegisteredEntity) UpdateDetailState(detail core.EntityDetailStatus) {
 	}
 }
 
+// AddHit 增加命中次数
 func (o *RegisteredEntity) AddHit() {
 	o.hit += 1
 }
