@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
-	"github.com/xuzhuoxi/infra-go/netx"
+	"github.com/xuzhuoxi/infra-go/netx/httpx"
 	"net/http"
 	"sync"
 )
@@ -44,7 +44,7 @@ func NewRabbitHomeServer() IRabbitHomeServer {
 // RabbitHomeServer 服务器实例
 type RabbitHomeServer struct {
 	EntityList IEntityList
-	HttpServer *netx.HttpServer
+	HttpServer *httpx.HttpServer
 	lock       sync.RWMutex
 }
 
@@ -59,7 +59,7 @@ func (o *RabbitHomeServer) Init() {
 	if nil != o.HttpServer {
 		return
 	}
-	o.HttpServer = netx.NewHttpServer().(*netx.HttpServer)
+	o.HttpServer = httpx.NewHttpServer().(*httpx.HttpServer)
 	o.HttpServer.MapHandle(PatternLink, newServerLinkHandler())
 	o.HttpServer.MapHandle(PatternUnlink, newServerUnlinkHandler())
 	o.HttpServer.MapHandle(PatternUpdate, newServerUpdateHandler())

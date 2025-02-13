@@ -9,7 +9,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"github.com/xuzhuoxi/Rabbit-Home/core/home"
-	"github.com/xuzhuoxi/infra-go/netx"
+	"github.com/xuzhuoxi/infra-go/netx/httpx"
 )
 
 // LinkWithGet 连接到 Rabbit-Home 服务器
@@ -23,21 +23,21 @@ func LinkWithGet(httpUrl string, info core.LinkEntity, weight float64) error {
 	}
 	data := base64.StdEncoding.EncodeToString(bs)
 	httpUrl = fmt.Sprintf("%s?%s=%s&%s=%v", httpUrl, home.PatternDataKey, data, home.PatternEntityWeightKey, weight)
-	return netx.HttpGet(httpUrl, nil)
+	return httpx.HttpGet(httpUrl, nil)
 }
 
 func UnlinkWithGet(httpUrl string, id string) error {
 	data := base64.StdEncoding.EncodeToString([]byte(id))
 	httpUrl = fmt.Sprintf("%s?%s=%s", httpUrl, home.PatternDataKey, data)
-	return netx.HttpGet(httpUrl, nil)
+	return httpx.HttpGet(httpUrl, nil)
 }
 
-func UpdateWithGet(httpUrl string, info core.EntityStatus, cb netx.ReqCallBack) error {
+func UpdateWithGet(httpUrl string, info core.EntityStatus, cb httpx.ReqCallBack) error {
 	bs, err := jsoniter.Marshal(info)
 	if nil != err {
 		return err
 	}
 	data := base64.StdEncoding.EncodeToString(bs)
 	httpUrl = fmt.Sprintf("%s?%s=%s", httpUrl, home.PatternDataKey, data)
-	return netx.HttpGet(httpUrl, cb)
+	return httpx.HttpGet(httpUrl, cb)
 }

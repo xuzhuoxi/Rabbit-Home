@@ -15,7 +15,7 @@ external:
   allows_on: false
   blocks_on: false
 # 5分钟
-timeout: 300 000 000 000
+timeout: 300000000000
 log:
   type: 0   # 0:Console 1:RollingFile 2:DailyFile 3:DailyRollingFile
   level: 2  # 0:All 1:Trace 2:Debug 3:Info 4:Warn 5:Error 6:Fatal 7:Off

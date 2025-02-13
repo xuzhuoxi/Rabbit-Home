@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
-	"github.com/xuzhuoxi/infra-go/netx"
+	"github.com/xuzhuoxi/infra-go/netx/httpx"
 	"testing"
 )
 
@@ -26,5 +26,5 @@ func TestLink(t *testing.T) {
 	bs, _ := json.Marshal(server1)
 	data := base64.StdEncoding.EncodeToString(bs)
 	url := fmt.Sprintf("http://127.0.0.1:9000/link?data=%s&w=%v", data, weight1)
-	netx.HttpGet(url, nil)
+	httpx.HttpGet(url, nil)
 }
