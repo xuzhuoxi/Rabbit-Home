@@ -57,6 +57,7 @@ func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 		Logger.Infoln(funcName, fmt.Sprintf("Link Entity Succ: %v", linkEntity))
 	}
 	writer.WriteHeader(http.StatusOK)
+	writer.Write(empty)
 
 	if weightStr != "" {
 		weight, err := strconv.ParseFloat(weightStr, 64)

@@ -45,5 +45,6 @@ func (l *serverUpdateHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 		return
 	}
 	writer.WriteHeader(http.StatusOK)
+	writer.Write(empty)
 	Logger.Infoln("[serverUpdateHandler.ServeHTTP]", fmt.Sprintf("Update State Succ: %v", state))
 }

@@ -40,5 +40,6 @@ func (l *serverUnlinkHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 		return
 	}
 	writer.WriteHeader(http.StatusOK)
+	writer.Write(empty)
 	fmt.Println(fmt.Sprintf("Unlink Entity(%s) Succ!", bsId))
 }
