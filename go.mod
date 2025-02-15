@@ -8,6 +8,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-//replace (
-//	github.com/xuzhuoxi/infra-go v1.0.4 => ../infra-go
-//)
+replace (
+	github.com/xuzhuoxi/infra-go v1.0.4 => ../infra-go
+)

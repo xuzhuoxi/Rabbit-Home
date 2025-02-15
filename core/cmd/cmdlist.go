@@ -16,7 +16,7 @@ const (
 )
 
 // OnCmdList list
-// list -name=Name -pid=PID
+// list -name=Name -on=[true|false] -pid=PID
 func OnCmdList(flagSet *cmdx.FlagSetExtend, args []string) {
 	name := flagSet.String(listName, "", "-name=Name")
 	on := flagSet.Bool(listOn, false, "-on=[true|false]")
