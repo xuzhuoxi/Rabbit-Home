@@ -11,26 +11,25 @@ import (
 )
 
 func newClientRouteHandler() http.Handler {
-	return &clientRouteHandler{post: clientPost}
+	return &clientRouteHandler{}
 }
 
-type clientRouteHandler struct {
-	post bool
-}
+type clientRouteHandler struct{}
 
 func (l *clientRouteHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if !ServerConfig.External.VerifyPost(request) {
+		return
+	}
 	if !ServerConfig.VerifyExternalIP(getClientIpAddr(request)) { // 验证是否外部IP
 		return
 	}
 
 	query := &core.HttpRequestQueryEntity{}
 	var err error
-	if l.post {
-		if l.post {
-			err = getValueWithPost(request, PatternDataKey, query)
-		} else {
-			err = getValueWithGet(request, PatternDataKey, query)
-		}
+	if request.Method == http.MethodPost {
+		err = getValueWithPost(request, PatternDataKey, query)
+	} else {
+		err = getValueWithGet(request, PatternDataKey, query)
 	}
 	if nil != err {
 		warnInfo := fmt.Sprintf("Qurey Fail: %v", err)

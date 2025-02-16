@@ -11,14 +11,15 @@ import (
 )
 
 func newServerLinkHandler() http.Handler {
-	return &serverLinkHandler{post: serverPost}
+	return &serverLinkHandler{}
 }
 
-type serverLinkHandler struct {
-	post bool
-}
+type serverLinkHandler struct{}
 
 func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if !ServerConfig.Internal.VerifyPost(request) {
+		return
+	}
 	if !ServerConfig.VerifyInternalIP(getClientIpAddr(request)) { // 验证是否内部IP
 		return
 	}
@@ -26,7 +27,7 @@ func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 	linkEntity := &core.LinkEntity{}
 	var err0 error
 	var weightStr string
-	if l.post {
+	if request.Method == http.MethodPost {
 		err0 = getValueWithPost(request, PatternDataKey, linkEntity)
 		weightStr = request.PostFormValue(PatternEntityWeightKey)
 	} else {

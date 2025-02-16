@@ -69,6 +69,7 @@ http:
 ### 2. 内部 IP 控制
 ```yaml
 internal:
+  post: false
   allows_on: false
   allows:
   blocks_on: true
@@ -76,6 +77,7 @@ internal:
     - "192.168.0.1"
     - "10.0.0.1-20"
 ```
+- **post**: 是否要求使用POST请求。
 - **allows_on**: 是否启用内部 IP 白名单。
   + 值: false/true
   + 说明: 为 true 时， allows 配置生效。
@@ -93,12 +95,14 @@ internal:
 
 ### 3. 外部 IP 控制
 ```yaml
+  post: true
   allows_on: false
   allows:
   blocks_on: true
   blocks:
     - "8.8.8.8"
 ```
+- **post**: 是否要求使用POST请求。
 - **allows_on**: 是否启用外部 IP 白名单。
   + 值: false/true
   + 说明: 为 true 时， allows 配置生效。
@@ -244,7 +248,7 @@ type EntityDetailStatus struct {
 ## 命令行使用
 启动项目后，可以通过命令行进行以下操作:
 
-- 列出实例
+- 列出实例列表
   + 示例: `list -name=Name -on=[true|false] -pid=PID`
   + -name: 实例名称。
   + -on: 实例是否在线。
@@ -261,24 +265,66 @@ type EntityDetailStatus struct {
   + **功能未实现**。
 
 ## 服务器实例连接
-实例可以通过 core/client/ 包下的函数，与 Rabbit-Home 进行通信。
+实例可以通过 core/client/ 包下的API，与 Rabbit-Home 进行通信。
 以下以 {httpUrl} 代表config.yaml中配置 http.addr 关联的地址。
-- 服务器连接到 Rabbit-Home：`{httpUrl}/link`
-  + LinkWithGet 
-  + LinkWithPost
-- 服务器断开 Rabbit-Home：`{httpUrl}/unlink`
-  + UnlinkWithGet
-  + UnlinkWithPost
-- 服务器更新信息到 Rabbit-Home：`{httpUrl}/update`
-  + UnlinkWithGet
-  + UpdateWithPost
-- 查询实例路由：`{httpUrl}/route`
+- 服务器连接到 Rabbit-Home：
+  + `LinkWithGet(homeAddrUrl string, info core.LinkEntity, weight float64, cb httpx.ReqCallBack) error`
+    - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternLink，即"/link"
+    - info: 游戏服务器实例基本信息
+    - weight: 实例压力系数重，值越大服务器压力越高
+    - cb: 回调，传入nil表示不处理
+    - 返回值: 如果调用出现错误，则返回错误信息
+  + `LinkWithPost(homeAddrUrl string, info core.LinkEntity, weight float64, cb httpx.ReqCallBack) error`
+    - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternLink，即"/link"
+    - info: 游戏服务器实例基本信息
+    - weight: 实例压力系数重，值越大服务器压力越高
+    - cb: 回调，传入nil表示不处理
+    - 返回值: 如果调用出现错误，则返回错误信息
+- 服务器断开 Rabbit-Home：
+  + `UnlinkWithGet(homeAddrUrl string, id string, cb httpx.ReqCallBack) error`
+    - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUnlink，即"/unlink"
+    - id: 服务器实例Id
+    - cb: 回调，传入nil表示不处理
+    - 返回值: 如果调用出现错误，则返回错误信息
+  + `UnlinkWithPost(homeAddrUrl string, id string, cb httpx.ReqCallBack) error`
+    - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUnlink，即"/unlink"
+    - id: 服务器实例Id
+    - cb: 回调，传入nil表示不处理
+    - 返回值: 如果调用出现错误，则返回错误信息
+- 服务器更新信息到 Rabbit-Home：
+  + `UpdateWithGet(homeAddrUrl string, info core.EntityStatus, cb httpx.ReqCallBack) error`
+    - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUpdate，即"/update"
+    - info: 服务器实例基本信息
+    - cb: 回调，传入nil表示不处理
+    - 返回值: 如果调用出现错误，则返回错误信息
+  + `UpdateWithPost(homeAddrUrl string, info core.EntityStatus, cb httpx.ReqCallBack) error`
+    - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUpdate，即"/update"
+    - info: 服务器实例基本信息
+    - cb: 回调，传入nil表示不处理
+    - 返回值: 如果调用出现错误，则返回错误信息
+  + `UpdateDetailWithGet(homeAddrUrl string, detail core.EntityDetailStatus, cb httpx.ReqCallBack) error`
+    - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUpdateDetail，即"/update"
+    - detail: 服务器实例详细状态
+    - cb: 回调，传入nil表示不处理
+    - 返回值: 如果调用出现错误，则返回错误信息
+  + `UpdateDetailWithPost(homeAddrUrl string, detail core.EntityDetailStatus, cb httpx.ReqCallBack) error`
+    - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUpdateDetail，即"/update"
+    - detail: 服务器实例详细状态
+    - cb: 回调，传入nil表示不处理
+    - 返回值: 如果调用出现错误，则返回错误信息
 
-## 客户端请求
-实例可以通过 core/client/ 包下的函数，与 Rabbit-Home 进行通信，获得得应该连接的服务器实例信息。
+## 客户端进行路由查询
+实例可以通过 core/client/ 包下的API，与 Rabbit-Home 进行通信，获得得应该连接的服务器实例信息。
 以下以 {httpUrl} 代表config.yaml中配置 http.addr 关联的地址。
 - 客户端请求服务器实例：`{httpUrl}/route?data=xxxxxxxx`
-- 
+  + `RouteWithGet(homeAddrUrl string, cb httpx.ReqCallBack) error`
+    - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternRoute，即"/route"
+    - cb: 回调，包含服务器实例信息
+    - 返回值: 如果调用出现错误，则返回错误信息
+  + `RouteWithPost(homeAddrUrl string, cb httpx.ReqCallBack) error`
+    - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternRoute，即"/route"
+    - cb: 回调，包含服务器实例信息
+    - 返回值: 如果调用出现错误，则返回错误信息
 
 ## 依赖库
 - infra-go [https://github.com/xuzhuoxi/infra-go](https://github.com/xuzhuoxi/infra-go)<br>

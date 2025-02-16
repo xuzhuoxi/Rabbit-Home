@@ -15,7 +15,9 @@ var (
 )
 
 func NewRegisteredEntity(entity core.LinkEntity) *RegisteredEntity {
-	return &RegisteredEntity{LinkEntity: entity, lastUpdateNano: time.Now().UnixNano()}
+	rs := &RegisteredEntity{LinkEntity: entity, lastUpdateNano: time.Now().UnixNano()}
+	rs.State.Id = rs.Id
+	return rs
 }
 
 // RegisteredEntity 已注册实例

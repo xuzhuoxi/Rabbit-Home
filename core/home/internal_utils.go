@@ -11,11 +11,6 @@ import (
 	"net/http"
 )
 
-const (
-	serverPost = false
-	clientPost = false
-)
-
 var empty = []byte("")
 
 func warnAndResponse(writer http.ResponseWriter, statusCode int, warnInfo string, logger logx.ILogger) {

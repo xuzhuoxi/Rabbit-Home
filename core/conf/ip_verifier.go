@@ -5,9 +5,11 @@ package conf
 
 import (
 	"net"
+	"net/http"
 )
 
 type IpVerifier struct {
+	Post     bool     `yaml:"post"`      // 接受的HTTP请求方式
 	AllowOn  bool     `yaml:"allow_on"`  // 是否启用白名单
 	AllowIPs []string `yaml:"allows"`    // IP白名单
 	BlockOn  bool     `yaml:"blocks_on"` // 是否启用黑名单
@@ -49,6 +51,17 @@ func (o *IpVerifier) CheckIpAddr(ipAddr string) bool {
 		return false
 	}
 	return true
+}
+
+// VerifyPost 检查请求是否为POST请求
+// 合格要求：
+// 1. 如果配置启用了POST请求，则必须为POST请求
+// 2. 如果配置禁用了POST请求，则必须为GET请求
+func (o *IpVerifier) VerifyPost(req *http.Request) bool {
+	if o.Post {
+		return req.Method == http.MethodPost
+	}
+	return req.Method == http.MethodGet
 }
 
 func (o *IpVerifier) contains(ipGroupArr []*ipRange, ip6 net.IP) bool {

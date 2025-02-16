@@ -19,6 +19,7 @@ const (
 
 	PatternDataKey         = "data"
 	PatternEntityWeightKey = "w"
+	PatternEntityDetailKey = "d"
 )
 
 var (

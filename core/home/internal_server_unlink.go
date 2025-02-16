@@ -9,20 +9,21 @@ import (
 )
 
 func newServerUnlinkHandler() http.Handler {
-	return &serverUnlinkHandler{post: serverPost}
+	return &serverUnlinkHandler{}
 }
 
-type serverUnlinkHandler struct {
-	post bool
-}
+type serverUnlinkHandler struct{}
 
 func (l *serverUnlinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if !ServerConfig.Internal.VerifyPost(request) {
+		return
+	}
 	if !ServerConfig.VerifyInternalIP(getClientIpAddr(request)) { // 验证是否内部IP
 		return
 	}
 	var bsId []byte
 	var err error
-	if l.post {
+	if request.Method == http.MethodPost {
 		bsId, err = getStringWithPost(request, PatternDataKey)
 	} else {
 		bsId, err = getStringWithGet(request, PatternDataKey)

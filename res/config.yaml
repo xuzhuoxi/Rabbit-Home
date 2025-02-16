@@ -1,6 +1,7 @@
 http:
   addr: "127.0.0.1:9000"
 internal:
+  post: true
   allows_on: false
   allows:
   blocks_on: false
@@ -12,6 +13,7 @@ internal:
     - "2001:0db8:85a3:0000:0000:8a2e:0370:0-7334"
     - "2001:0db8:85a3:0000:0000:8a2e:0370:0-7334"
 external:
+  post: false
   allows_on: false
   blocks_on: false
 # 5分钟
