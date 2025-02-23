@@ -1,4 +1,6 @@
-# Rabbit-Home 项目
+# Rabbit-Home
+
+[English](./README_EN.md) | 简体中文
 
 ## 简介
 Rabbit-Home 是一个用于管理和监控服务器实例的项目。它支持通过命令行和HTTP请求来管理服务器实例，包括连接、断开连接、更新状态、查询信息和踢除实例等功能。
