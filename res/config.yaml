@@ -1,25 +1,52 @@
+##### http服务配置
 http:
   addr: "127.0.0.1:9000"
+
+##### 内部Rabbit-Server实例 服务配置
 internal:
+  ##### 内部Rabbit-Server实例 Http请求方式
   post: false
-  allows_on: false
-  allows:
-  blocks_on: false
-  blocks:
-    - "192.168.0.1"
-    - "10.0.0.1-20"
-    - "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
-    - "2001:db8:85a3::8a2e:370:7334"
-    - "2001:0db8:85a3:0000:0000:8a2e:0370:0-7334"
-    - "2001:0db8:85a3:0000:0000:8a2e:0370:0-7334"
+  ##### 内部Rabbit-Server实例 超时设置
+  timeout: 300000000000 # 5分钟, 单位:纳秒
+  ##### 内部Rabbit-Server实例 Ip访问控制配置
+  ip-verify:
+    allows-on: false
+    allows:
+    blocks-on: false
+    blocks:
+      - "192.168.0.1"
+      - "10.0.0.1-20"
+      - "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+      - "2001:db8:85a3::8a2e:370:7334"
+      - "2001:0db8:85a3:0000:0000:8a2e:0370:0-7334"
+      - "2001:0db8:85a3:0000:0000:8a2e:0370:0-7334"
+  #### 内部Rabbit-Server实例 密钥校验配置
+  key-verify:
+    enable: true # 是否开启密钥校验
+    share: '00000000000000000000000000000000' # 共享密钥, 不应该少于6个字符
+    key-type: "pem" # 密钥类型：pem,rsa,ssh
+    keys-path: "keys/public" # 公钥文件目录
+    hot-keys-enable: true # 是否开启密钥的热部署
+    hot-keys-path: "keys/hot" # 热部署的公钥文件路径
+
+##### 外网客户端 服务配置
 external:
+  ##### 外部客户端 Http请求方式
   post: false
-  allows_on: false
-  blocks_on: false
-# 5分钟
-timeout: 300000000000
+  ##### 外部客户端 Ip访问控制配置
+  ip-verify:
+    allows-on: false
+    allows: []
+    blocks-on: false
+    blocks: []
+  key-verify:
+    enable: true # 是否开启密钥校验
+    key-type: "pem" # 密钥类型：pem,rsa,ssh
+    key-path: "keys/private/pkcs8_private.pem" # 私钥文件路径
+
+##### 日志记录配置
 log:
   type: 0   # 0:Console 1:RollingFile 2:DailyFile 3:DailyRollingFile
-  level: 2  # 0:All 1:Trace 2:Debug 3:Info 4:Warn 5:Error 6:Fatal 7:Off
+  level: 0  # 0:All 1:Trace 2:Debug 3:Info 4:Warn 5:Error 6:Fatal 7:Off
   path: "RabbitHome.log"
   size: '1MB' # 1MB

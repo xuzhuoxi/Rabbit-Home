@@ -21,8 +21,9 @@ func OnCmdInfo(flagSet *cmdx.FlagSetExtend, args []string) {
 		fmt.Println("Command \"" + flagSet.Name() + "\" args error!")
 		return
 	}
-	entity, ok := home.Server.GetEntityById(*id)
+	entity, ok := home.GlobalHomeServer.GetEntityById(*id)
 	if !ok {
+		fmt.Println("no such id")
 		return
 	}
 	fmt.Println(entity.DetailString())

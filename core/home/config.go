@@ -5,7 +5,6 @@ package home
 
 import (
 	"flag"
-	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"github.com/xuzhuoxi/Rabbit-Home/core/conf"
 	"github.com/xuzhuoxi/infra-go/filex"
 	"github.com/xuzhuoxi/infra-go/logx"
@@ -21,7 +20,7 @@ func initConfig() {
 	if *confPath != "" {
 		err := initConfigWithFile(*confPath)
 		if nil != err {
-			Logger.Errorln(err)
+			GlobalLogger.Errorln(err)
 			panic(err)
 		}
 		return
@@ -41,16 +40,13 @@ func initConfigWithFile(filePath string) error {
 	if nil != err {
 		return err
 	}
-	cfg := &conf.ServerConfig{}
+	cfg := &conf.HomeConfig{}
 	err = yaml.Unmarshal(bs, cfg)
 	if nil != err {
 		return err
 	}
-	if 0 == cfg.Timeout {
-		cfg.Timeout = core.LinkedTimeout
-	}
 	cfg.PreProcess()
-	ServerConfig = cfg
+	GlobalHomeConfig = cfg
 	return nil
 }
 
@@ -59,14 +55,14 @@ func initConfigDefault() {
 }
 
 func initConfigWithAddr(addr string) {
-	ServerConfig = &conf.ServerConfig{Http: conf.HttpConfig{Addr: addr}, Timeout: core.LinkedTimeout}
+	GlobalHomeConfig = &conf.HomeConfig{Http: conf.HttpConfig{Addr: addr}}
 }
 
 func updateLogger() {
-	cfgLog := ServerConfig.CfgLog
+	cfgLog := GlobalHomeConfig.CfgLog
 	if nil == cfgLog {
 		return
 	}
-	Logger.RemoveConfig(logx.TypeConsole)
-	Logger.SetConfig(cfgLog.ToLogConfig())
+	GlobalLogger.RemoveConfig(logx.TypeConsole)
+	GlobalLogger.SetConfig(cfgLog.ToLogConfig())
 }

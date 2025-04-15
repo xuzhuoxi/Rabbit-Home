@@ -7,55 +7,54 @@ import (
 	"github.com/xuzhuoxi/infra-go/logx"
 )
 
-const (
-	SepIp      = "."
-	SepIp6     = ":"
-	SepIpRange = "-"
-)
-
+// HttpConfig http服务配置
+// 用于启动http服务
+// 服务于Internal与External的功能
 type HttpConfig struct {
 	Addr string `yaml:"addr"` // 服务器启动监听地址
 }
 
-type ServerConfig struct {
-	Http     HttpConfig   `yaml:"http"`     // Http服务
-	Internal *IpVerifier  `yaml:"internal"` // 内部Ip控制
-	External *IpVerifier  `yaml:"external"` // 外部IP控制
-	Timeout  int64        `yaml:"timeout"`  // 超时参数
-	CfgLog   *logx.CfgLog `yaml:"log"`      // 日志记录参数
+// HomeConfig 配置
+// Rabbit-Home的根配置
+// 一般对应运行目标下名为config.yaml的文件
+type HomeConfig struct {
+	Http             HttpConfig        `yaml:"http"`     // http服务配置
+	InternalVerifier *InternalVerifier `yaml:"internal"` // 内部Rabbit-Server访问控制配置
+	ExternalVerifier *ExternalVerifier `yaml:"external"` // 外网查询访问控制配置
+	CfgLog           *logx.CfgLog      `yaml:"log"`      // 日志记录配置
 }
 
 // PreProcess 预处理
-func (o *ServerConfig) PreProcess() {
-	if o.Internal != nil {
-		o.Internal.PreProcess()
+func (o *HomeConfig) PreProcess() {
+	if o.InternalVerifier != nil {
+		o.InternalVerifier.PreProcess()
 	}
-	if o.External != nil {
-		o.External.PreProcess()
+	if o.ExternalVerifier != nil {
+		o.ExternalVerifier.PreProcess()
 	}
 }
 
-// VerifyInternalIP 检查是否为内部IP
-func (o *ServerConfig) VerifyInternalIP(ipAddr string) bool {
+// VerifyInternalIP 检查是内部IP的合法性
+func (o *HomeConfig) VerifyInternalIP(ipAddr string) bool {
 	if len(ipAddr) == 0 {
 		return false
 	}
-	if nil == o.Internal {
+	if nil == o.InternalVerifier {
 		return true
 	}
-	return o.Internal.CheckIpAddr(ipAddr)
+	return o.InternalVerifier.CheckIpAddr(ipAddr)
 }
 
-// VerifyExternalIP 检查是否为外部IP
-func (o *ServerConfig) VerifyExternalIP(ipAddr string) bool {
+// VerifyExternalIP 检查外部IP的合法性
+func (o *HomeConfig) VerifyExternalIP(ipAddr string) bool {
 	if len(ipAddr) == 0 {
 		return false
 	}
 	if len(ipAddr) == 0 {
 		return false
 	}
-	if nil == o.External {
+	if nil == o.ExternalVerifier {
 		return true
 	}
-	return o.External.CheckIpAddr(ipAddr)
+	return o.ExternalVerifier.CheckIpAddr(ipAddr)
 }

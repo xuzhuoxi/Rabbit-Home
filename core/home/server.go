@@ -33,24 +33,31 @@ type IRabbitHomeServer interface {
 	IEntitySetter
 	IEntityStateUpdate
 	IEntityQuery
+	// GetHomeKeys 获取密钥管理器
+	GetHomeKeys() *RabbitHomeKeys
 }
 
 // NewRabbitHomeServer
 // 创建一个 Rabbit-Home 服务器实例
 func NewRabbitHomeServer() IRabbitHomeServer {
-	return &RabbitHomeServer{EntityList: NewEntityList()}
+	return &RabbitHomeServer{EntityList: NewEntityList(), Keys: NewRabbitHomeKeys()}
 }
 
 // RabbitHomeServer 服务器实例
 type RabbitHomeServer struct {
-	EntityList IEntityList
-	HttpServer *httpx.HttpServer
+	EntityList IEntityList       // 已经注册的实体列表
+	Keys       *RabbitHomeKeys   // 密钥管理器
+	HttpServer *httpx.HttpServer // Http服务器
 	lock       sync.RWMutex
 }
 
 func (o *RabbitHomeServer) String() string {
 	return fmt.Sprintf("{Running=%v, ListenAddr=%s, Size=%d}",
 		o.HttpServer.Running(), o.HttpServer.Server.Addr, o.EntityList.Size())
+}
+
+func (o *RabbitHomeServer) GetHomeKeys() *RabbitHomeKeys {
+	return o.Keys
 }
 
 func (o *RabbitHomeServer) Init() {
@@ -60,10 +67,9 @@ func (o *RabbitHomeServer) Init() {
 		return
 	}
 	o.HttpServer = httpx.NewHttpServer().(*httpx.HttpServer)
-	o.HttpServer.MapHandle(PatternLink, newServerLinkHandler())
-	o.HttpServer.MapHandle(PatternUnlink, newServerUnlinkHandler())
-	o.HttpServer.MapHandle(PatternUpdate, newServerUpdateHandler())
-	o.HttpServer.MapHandle(PatternRoute, newClientRouteHandler())
+	for _, handler := range MapHandlerList {
+		o.HttpServer.MapHandle(handler.Pattern, handler.Handler())
+	}
 }
 
 func (o *RabbitHomeServer) MapHandle(pattern string, handler http.Handler) {
@@ -120,23 +126,27 @@ func (o *RabbitHomeServer) GetEntitiesByPlatform(platformId string) (entities []
 	return o.GetEntitiesByPlatform(platformId)
 }
 
-func (o *RabbitHomeServer) AddEntity(entity RegisteredEntity) error {
+func (o *RabbitHomeServer) AddEntity(entity *RegisteredEntity) error {
 	return o.EntityList.AddEntity(entity)
 }
 
-func (o *RabbitHomeServer) ReplaceEntity(entity RegisteredEntity) error {
+func (o *RabbitHomeServer) ReplaceEntity(entity *RegisteredEntity) error {
 	return o.EntityList.ReplaceEntity(entity)
+}
+
+func (o *RabbitHomeServer) AddOrReplaceEntity(entity *RegisteredEntity) (add bool, err error) {
+	return o.EntityList.AddOrReplaceEntity(entity)
 }
 
 func (o *RabbitHomeServer) RemoveEntity(id string) (entity *RegisteredEntity, ok bool) {
 	return o.EntityList.RemoveEntity(id)
 }
 
-func (o *RabbitHomeServer) UpdateState(state core.EntityStatus) bool {
+func (o *RabbitHomeServer) UpdateState(state core.UpdateInfo) bool {
 	return o.EntityList.UpdateState(state)
 }
 
-func (o *RabbitHomeServer) UpdateDetailState(detail core.EntityDetailStatus) bool {
+func (o *RabbitHomeServer) UpdateDetailState(detail core.UpdateDetailInfo) bool {
 	return o.EntityList.UpdateDetailState(detail)
 }
 
@@ -157,7 +167,20 @@ func (o *RabbitHomeServer) start(addr string) error {
 	if o.HttpServer.Running() {
 		return errors.New("HttpServer is running! ")
 	}
+	o.loadKeys()
 	return o.HttpServer.StartServer(addr)
+}
+func (o *RabbitHomeServer) loadKeys() {
+	if nil != o.Keys {
+		internalVerifier := GlobalHomeConfig.InternalVerifier.KeyVerifier
+		if internalVerifier.Enable {
+			o.Keys.LoadInternalDefaultPublicKeys()
+		}
+		externalVerifier := GlobalHomeConfig.ExternalVerifier.KeyVerifier
+		if externalVerifier.Enable {
+			o.Keys.LoadSelfPrivateKey()
+		}
+	}
 }
 
 func (o *RabbitHomeServer) stop() error {

@@ -33,9 +33,11 @@ type IEntityGetter interface {
 // IEntitySetter 设置实例接口
 type IEntitySetter interface {
 	// AddEntity 添加实例
-	AddEntity(entity RegisteredEntity) error
+	AddEntity(entity *RegisteredEntity) error
 	// ReplaceEntity 替换实例
-	ReplaceEntity(entity RegisteredEntity) error
+	ReplaceEntity(entity *RegisteredEntity) error
+	// AddOrReplaceEntity 添加或替换实例
+	AddOrReplaceEntity(entity *RegisteredEntity) (add bool, err error)
 	// RemoveEntity 移除实例
 	RemoveEntity(id string) (entity *RegisteredEntity, ok bool)
 }
@@ -43,9 +45,9 @@ type IEntitySetter interface {
 // IEntityStateUpdate 更新实例状态接口
 type IEntityStateUpdate interface {
 	// UpdateState 更新实例状态信息
-	UpdateState(state core.EntityStatus) bool
+	UpdateState(state core.UpdateInfo) bool
 	// UpdateDetailState 更新实例状态详细信息
-	UpdateDetailState(detail core.EntityDetailStatus) bool
+	UpdateDetailState(detail core.UpdateDetailInfo) bool
 }
 
 // IEntityQuery 查询实例接口
@@ -142,8 +144,8 @@ func (o *EntityList) GetEntitiesByPlatform(platformId string) (entities []Regist
 	return rs
 }
 
-func (o *EntityList) AddEntity(entity RegisteredEntity) error {
-	if entity.IsNotValid() {
+func (o *EntityList) AddEntity(entity *RegisteredEntity) error {
+	if entity.IsInvalid() {
 		return errors.New("AddEntity Error: Entity not valid! ")
 	}
 	o.lock.Lock()
@@ -154,13 +156,12 @@ func (o *EntityList) AddEntity(entity RegisteredEntity) error {
 	if index != -1 {
 		return errors.New("AddEntity Error: Duplicate Entity exist! ")
 	}
-	newEntity := entity
-	o.Entities = append(o.Entities, &newEntity)
+	o.Entities = append(o.Entities, entity)
 	return nil
 }
 
-func (o *EntityList) ReplaceEntity(entity RegisteredEntity) error {
-	if entity.IsNotValid() {
+func (o *EntityList) ReplaceEntity(entity *RegisteredEntity) error {
+	if entity.IsInvalid() {
 		return errors.New("ReplaceEntity Error: Entity not valid! ")
 	}
 	o.lock.Lock()
@@ -171,9 +172,26 @@ func (o *EntityList) ReplaceEntity(entity RegisteredEntity) error {
 	if index == -1 {
 		return errors.New("ReplaceEntity Error: No Entity exist! ")
 	}
-	newEntity := entity
-	o.Entities[index] = &newEntity
+	o.Entities[index] = entity
 	return nil
+}
+
+func (o *EntityList) AddOrReplaceEntity(entity *RegisteredEntity) (add bool, err error) {
+	if entity.IsInvalid() {
+		return false, errors.New("AddOrReplaceEntity Error: Entity not valid! ")
+	}
+	o.lock.Lock()
+	defer o.lock.Unlock()
+	_, index := o.findEntity(func(each *RegisteredEntity) bool {
+		return each.Id == entity.Id
+	})
+	if index != -1 {
+		o.Entities[index] = entity
+	} else {
+		o.Entities = append(o.Entities, entity)
+		add = true
+	}
+	return
 }
 
 func (o *EntityList) RemoveEntity(id string) (entity *RegisteredEntity, ok bool) {
@@ -192,7 +210,7 @@ func (o *EntityList) RemoveEntity(id string) (entity *RegisteredEntity, ok bool)
 	return
 }
 
-func (o *EntityList) UpdateState(state core.EntityStatus) bool {
+func (o *EntityList) UpdateState(state core.UpdateInfo) bool {
 	if state.IsNotValid() {
 		return false
 	}
@@ -208,7 +226,7 @@ func (o *EntityList) UpdateState(state core.EntityStatus) bool {
 	return false
 }
 
-func (o *EntityList) UpdateDetailState(detail core.EntityDetailStatus) bool {
+func (o *EntityList) UpdateDetailState(detail core.UpdateDetailInfo) bool {
 	if detail.IsNotValid() {
 		return false
 	}

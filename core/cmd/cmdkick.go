@@ -22,7 +22,7 @@ func OnCmdKick(flagSet *cmdx.FlagSetExtend, args []string) {
 		return
 	}
 
-	entity, ok := home.Server.RemoveEntity(*id)
+	entity, ok := home.GlobalHomeServer.RemoveEntity(*id)
 	if !ok || nil == entity {
 		fmt.Println(fmt.Sprintf("Kick Entity(%s) fail! Entity is not exist!", *id))
 		return

@@ -6,6 +6,7 @@ package home
 import (
 	"fmt"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
+	"github.com/xuzhuoxi/infra-go/cryptox/symmetric"
 	"strings"
 	"time"
 )
@@ -14,28 +15,29 @@ var (
 	EntityEmpty = RegisteredEntity{}
 )
 
-func NewRegisteredEntity(entity core.LinkEntity) *RegisteredEntity {
-	rs := &RegisteredEntity{LinkEntity: entity, lastUpdateNano: time.Now().UnixNano()}
+func NewRegisteredEntity(entity core.LinkInfo) *RegisteredEntity {
+	rs := &RegisteredEntity{LinkInfo: entity, lastUpdateNano: time.Now().UnixNano()}
 	rs.State.Id = rs.Id
 	return rs
 }
 
 // RegisteredEntity 已注册实例
 type RegisteredEntity struct {
-	core.LinkEntity
-	State  core.EntityStatus       // 实例简单状态
-	Detail core.EntityDetailStatus // 实例详细状态
+	core.LinkInfo
+	State  core.UpdateInfo       // 实例简单状态
+	Detail core.UpdateDetailInfo // 实例详细状态
 
-	lastUpdateNano int64 // 上一次更新时间戳
-	hit            int   // 命中次数
+	sk             []byte // 临时共享的对称密钥
+	lastUpdateNano int64  // 上一次更新时间戳
+	hit            int    // 命中次数
 }
 
 func (o *RegisteredEntity) String() string {
-	return fmt.Sprintf("{Base=%s, State=%s}", o.LinkEntity.String(), o.State.String())
+	return fmt.Sprintf("{Base=%s, State=%s}", o.LinkInfo.String(), o.State.String())
 }
 
 func (o *RegisteredEntity) DetailString() string {
-	return fmt.Sprintf("{Base=%s, State=%s, Detail=%s}", o.LinkEntity.String(), o.State.String(), o.Detail.String())
+	return fmt.Sprintf("{Base=%s, State=%s, Detail=%s}", o.LinkInfo.String(), o.State.String(), o.Detail.String())
 }
 
 // IsTimeout 是否已经超时
@@ -46,17 +48,28 @@ func (o *RegisteredEntity) IsTimeout() bool {
 	return (time.Now().UnixNano() - o.lastUpdateNano) >= core.LinkedTimeout
 }
 
+func (o *RegisteredEntity) SaveShareKey(sk []byte) {
+	o.sk = sk
+}
+
+func (o *RegisteredEntity) GetAesCipher() (cipher symmetric.IAESCipher, ok bool) {
+	if len(o.sk) == 0 {
+		return nil, false
+	}
+	return symmetric.NewAESCipher(o.sk), true
+}
+
 // UpdateState 更新实例状态信息
-func (o *RegisteredEntity) UpdateState(state core.EntityStatus) {
+func (o *RegisteredEntity) UpdateState(state core.UpdateInfo) {
 	o.State.Weight = state.Weight
 }
 
 // UpdateDetailState 更新实例详细状态信息
-func (o *RegisteredEntity) UpdateDetailState(detail core.EntityDetailStatus) {
-	if o.Id != detail.Id || len(detail.Keys) == 0 {
+func (o *RegisteredEntity) UpdateDetailState(detail core.UpdateDetailInfo) {
+	if o.Id != detail.Id || len(detail.EnableKeys) == 0 {
 		return
 	}
-	keys := strings.Split(detail.Keys, ",")
+	keys := strings.Split(detail.EnableKeys, ",")
 	for idx := range keys {
 		switch keys[idx] {
 		case "start":

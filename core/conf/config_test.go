@@ -3,6 +3,7 @@
 package conf
 
 import (
+	verifier2 "github.com/xuzhuoxi/Rabbit-Home/core/conf/verifier"
 	"gopkg.in/yaml.v2"
 	"testing"
 )
@@ -32,7 +33,7 @@ var (
 )
 
 func TestIpVerifier(t *testing.T) {
-	verifier := &IpVerifier{}
+	verifier := &verifier2.IpVerifier{}
 	err := yaml.Unmarshal([]byte(cfgStr), verifier)
 	if nil != err {
 		t.Fatal(err)

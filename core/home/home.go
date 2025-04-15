@@ -6,6 +6,8 @@ package home
 import (
 	"github.com/xuzhuoxi/Rabbit-Home/core/conf"
 	"github.com/xuzhuoxi/infra-go/logx"
+	"net/http"
+	"sync"
 )
 
 const (
@@ -16,32 +18,44 @@ const (
 	PatternUnlink = "/unlink"
 	PatternUpdate = "/update"
 	PatternRoute  = "/route"
-
-	PatternDataKey         = "data"
-	PatternEntityWeightKey = "w"
-	PatternEntityDetailKey = "d"
 )
 
 var (
-	Server       IRabbitHomeServer
-	ServerConfig *conf.ServerConfig
-	Logger       logx.ILogger
+	GlobalHomeServer IRabbitHomeServer
+	GlobalHomeConfig *conf.HomeConfig
+	GlobalLogger     logx.ILogger
+
+	GlobalLock sync.RWMutex
+)
+
+type mapHandleInfo struct {
+	Pattern string
+	Handler func() http.Handler
+}
+
+var (
+	MapHandlerList []mapHandleInfo
 )
 
 func init() {
-	Logger = logx.NewLogger()
-	Logger.SetConfig(logx.LogConfig{Type: logx.TypeConsole, Level: logx.LevelAll})
+	GlobalLogger = logx.NewLogger()
+	GlobalLogger.SetConfig(logx.LogConfig{Type: logx.TypeConsole, Level: logx.LevelAll})
+}
+
+// RegisterMapHandler 注册处理响应器
+func RegisterMapHandler(pattern string, newHandler func() http.Handler) {
+	MapHandlerList = append(MapHandlerList, mapHandleInfo{Pattern: pattern, Handler: newHandler})
 }
 
 // StartHomeServer 启动服务器
 func StartHomeServer() {
-	if nil == Server {
-		Server = NewRabbitHomeServer()
-		Server.Init()
+	if nil == GlobalHomeServer {
+		GlobalHomeServer = NewRabbitHomeServer()
+		GlobalHomeServer.Init()
 	}
 	initConfig()
 	updateLogger()
-	err := Server.StartByAddr(ServerConfig.Http.Addr)
+	err := GlobalHomeServer.StartByAddr(GlobalHomeConfig.Http.Addr)
 	if nil != err {
 		panic(err)
 	}
@@ -49,10 +63,10 @@ func StartHomeServer() {
 
 // StopHomeServer 关闭服务器
 func StopHomeServer() {
-	if nil == Server {
+	if nil == GlobalHomeServer {
 		return
 	}
-	err := Server.Stop()
+	err := GlobalHomeServer.Stop()
 	if nil != err {
 		panic(err)
 	}

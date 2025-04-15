@@ -1,7 +1,7 @@
-// Package conf
-// Create on 2023/6/4
+// Package verifier
+// Create on 2025/2/12
 // @author xuzhuoxi
-package conf
+package verifier
 
 import (
 	"errors"
@@ -9,6 +9,12 @@ import (
 	"github.com/xuzhuoxi/infra-go/mathx"
 	"net"
 	"strings"
+)
+
+const (
+	SepIp      = "."
+	SepIp6     = ":"
+	SepIpRange = "-"
 )
 
 func newIPRangeFromAddr(addr string) *ipRange {
@@ -24,6 +30,8 @@ func newMultiIPRangeFromAddr(addrArr []string) []*ipRange {
 	}
 	return rs
 }
+
+// ipRange ---------- ---------- ---------- ---------- ---------- ----------
 
 type ipRange struct {
 	MinIP net.IP
@@ -41,7 +49,7 @@ func (o *ipRange) ContainsAddr(ipAddr string) bool {
 }
 
 // ContainsIP6 检测是否包含ip地址
-// 如果 ip 为 nil,则返回false
+// 如果 ip6 为 nil,则返回false
 func (o *ipRange) ContainsIP6(ip6 net.IP) bool {
 	if nil == ip6 {
 		return false
@@ -105,4 +113,62 @@ func (o *ipRange) containsIP(ip net.IP) bool {
 		}
 	}
 	return true
+}
+
+// IpVerifier ---------- ---------- ---------- ---------- ---------- ----------
+
+type IpVerifier struct {
+	AllowOn  bool     `yaml:"allow-on"`  // 是否启用白名单
+	AllowIPs []string `yaml:"allows"`    // IP白名单
+	BlockOn  bool     `yaml:"blocks-on"` // 是否启用黑名单
+	BlockIPs []string `yaml:"blocks"`    // IP黑名单
+
+	allowIps []*ipRange
+	blockIps []*ipRange
+}
+
+// PreProcess 对原始数据进行预处理
+func (o *IpVerifier) PreProcess() {
+	if len(o.AllowIPs) > 0 {
+		o.allowIps = newMultiIPRangeFromAddr(o.AllowIPs)
+	}
+	if len(o.BlockIPs) > 0 {
+		o.blockIps = newMultiIPRangeFromAddr(o.BlockIPs)
+	}
+}
+
+// CheckIpAddr 检查IP地址是否合格
+// 合格要求：
+// 1. 不为空
+// 2. 合法IP地址
+// 3. 如果启用了黑名单，则必须不属于黑名单
+// 4. 如果启用了白名单，则必须属于白名单
+func (o *IpVerifier) CheckIpAddr(ipAddr string) bool {
+	if len(ipAddr) == 0 {
+		return false
+	}
+	ip := net.ParseIP(ipAddr)
+	if nil == ip {
+		return false
+	}
+	ip6 := ip.To16()
+	if o.BlockOn && o.contains(o.blockIps, ip6) {
+		return false
+	}
+	if o.AllowOn && !o.contains(o.allowIps, ip6) {
+		return false
+	}
+	return true
+}
+
+func (o *IpVerifier) contains(ipGroupArr []*ipRange, ip6 net.IP) bool {
+	if len(ipGroupArr) == 0 {
+		return false
+	}
+	for index := range ipGroupArr {
+		if ipGroupArr[index].ContainsIP6(ip6) {
+			return true
+		}
+	}
+	return false
 }
