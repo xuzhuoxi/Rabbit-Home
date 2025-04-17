@@ -7,6 +7,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"github.com/xuzhuoxi/Rabbit-Home/core/home"
+	"github.com/xuzhuoxi/infra-go/cryptox/asymmetric"
 	"github.com/xuzhuoxi/infra-go/cryptox/symmetric"
 	"github.com/xuzhuoxi/infra-go/netx/httpx"
 	"net/url"
@@ -64,7 +65,7 @@ func UpdateWithPost(homeAddrUrl string, info core.UpdateInfo, aesCipher symmetri
 		return err
 	}
 	if nil != aesCipher {
-		bs, err = aesCipher.EncryptGCM(bs)
+		bs, err = aesCipher.Encrypt(bs)
 		if nil != err {
 			return err
 		}
@@ -89,7 +90,7 @@ func UpdateDetailWithPost(homeAddrUrl string, detail core.UpdateDetailInfo, aesC
 		return err
 	}
 	if nil != aesCipher {
-		bs, err = aesCipher.EncryptGCM(bs)
+		bs, err = aesCipher.Encrypt(bs)
 		if nil != err {
 			return err
 		}
@@ -103,12 +104,26 @@ func UpdateDetailWithPost(homeAddrUrl string, detail core.UpdateDetailInfo, aesC
 	return httpx.HttpPostForm(httpUrl, value, cb)
 }
 
-// RouteWithPost 路由请求，获得合适的服务器实例信息
+// QueryRouteWithPost 路由请求，获得合适的服务器实例信息
 // homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternRoute，即"/route"
+// queryRoute: 路由请求信息
+// rsaPublicCipher: 签名公钥，如果启用签名认证，则必须设置
 // cb: 回调，传入nil表示不处理
 // 返回值：如果调用出现错误，则返回错误信息
-func RouteWithPost(homeAddrUrl string, cb httpx.ReqCallBack) error {
+func QueryRouteWithPost(homeAddrUrl string, queryRoute core.QueryRouteInfo, publicRsaCipher asymmetric.IRSAPublicCipher, cb httpx.ReqCallBack) error {
+	bs, err := jsoniter.Marshal(queryRoute)
+	if nil != err {
+		return err
+	}
+	if nil != publicRsaCipher {
+		bs, err = publicRsaCipher.Encrypt(bs)
+		if nil != err {
+			return err
+		}
+	}
+	date := core.Base64Encoding.EncodeToString(bs)
 	value := make(url.Values)
+	value.Set(core.HttpKeyQuery, date)
 	httpUrl := homeAddrUrl + home.PatternRoute
 	return httpx.HttpPostForm(httpUrl, value, cb)
 }

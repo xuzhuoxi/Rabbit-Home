@@ -23,12 +23,15 @@ type serverUnlinkHandler struct {
 }
 
 func (l *serverUnlinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	// 验证数据模式与IP
 	if !home.GlobalHomeConfig.InternalVerifier.VerifyPost(request) {
 		return
 	}
 	if !home.GlobalHomeConfig.VerifyInternalIP(getClientIpAddr(request)) { // 验证是否内部IP
 		return
 	}
+
+	// 提取数据
 	unlinkInfo := &core.UnlinkInfo{}
 	var err0 error
 	if request.Method == http.MethodPost {
@@ -45,11 +48,13 @@ func (l *serverUnlinkHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 	home.GlobalLock.Lock()
 	defer home.GlobalLock.Unlock()
 
+	// 查找实例
 	if _, has := home.GlobalHomeServer.GetEntityById(unlinkInfo.Id); !has {
 		warnInfo := fmt.Sprintf("%s Unlink Entity Fail: No such id='%s'", l.logPrefix, unlinkInfo.Id)
 		warnResponse(writer, http.StatusBadRequest, core.CodeParamInvalid, warnInfo, l.logger)
 		return
 	}
+
 	// 验证签名
 	kv := home.GlobalHomeConfig.InternalVerifier.KeyVerifier
 	var pass bool
@@ -71,6 +76,6 @@ func (l *serverUnlinkHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 	}
 
 	backInfo := &core.UnlinkBackInfo{Id: unlinkInfo.Id}
-	sucResponse(writer, backInfo, l.logger)
+	sucResponse(writer, backInfo, nil, l.logger)
 	l.logger.Infoln(l.logPrefix, "Unlink Entity Suc:", unlinkInfo.Id)
 }

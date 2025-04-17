@@ -27,13 +27,16 @@ type RegisteredEntity struct {
 	State  core.UpdateInfo       // 实例简单状态
 	Detail core.UpdateDetailInfo // 实例详细状态
 
-	sk             []byte // 临时共享的对称密钥
-	lastUpdateNano int64  // 上一次更新时间戳
-	hit            int    // 命中次数
+	internalSK       []byte // 内部临时对称密钥
+	internalBase64SK string // 内部临时对称密钥base64字符串
+	openSK           []byte // 对外临时对称密钥
+	openBase64SK     string // 对外临时对称密钥base64字符串
+	lastUpdateNano   int64  // 上一次更新时间戳
+	hit              int    // 命中次数
 }
 
 func (o *RegisteredEntity) String() string {
-	return fmt.Sprintf("{Base=%s, State=%s}", o.LinkInfo.String(), o.State.String())
+	return fmt.Sprintf("{Id=%s, PlatformId=%s, Type=%s, Weight=%f, Link=%d}", o.Id, o.PlatformId, o.TypeName, o.State.Weight, o.Detail.Links)
 }
 
 func (o *RegisteredEntity) DetailString() string {
@@ -48,19 +51,56 @@ func (o *RegisteredEntity) IsTimeout() bool {
 	return (time.Now().UnixNano() - o.lastUpdateNano) >= core.LinkedTimeout
 }
 
-func (o *RegisteredEntity) SaveShareKey(sk []byte) {
-	o.sk = sk
+func (o *RegisteredEntity) SaveInternalSK(sk []byte) {
+	o.internalSK = sk
+	if len(sk) == 0 {
+		o.internalBase64SK = ""
+	} else {
+		o.internalBase64SK = core.Base64Encoding.EncodeToString(sk)
+	}
 }
 
-func (o *RegisteredEntity) GetAesCipher() (cipher symmetric.IAESCipher, ok bool) {
-	if len(o.sk) == 0 {
+func (o *RegisteredEntity) SaveOpenSK(sk []byte) {
+	o.openSK = sk
+	if len(sk) == 0 {
+		o.openBase64SK = ""
+	} else {
+		o.openBase64SK = core.Base64Encoding.EncodeToString(sk)
+	}
+}
+
+func (o *RegisteredEntity) GetInternalBase64SK() string {
+	return o.internalBase64SK
+}
+
+func (o *RegisteredEntity) GetOpenBase64SK() string {
+	return o.openBase64SK
+}
+
+func (o *RegisteredEntity) GetOpenSK() []byte {
+	if nil == o.openSK {
+		return nil
+	}
+	if len(o.openSK) == 0 {
+		return []byte{}
+	}
+	rs := make([]byte, len(o.openSK))
+	copy(rs, o.openSK)
+	return rs
+}
+
+func (o *RegisteredEntity) GetInternalAesCipher() (cipher symmetric.IAESCipher, ok bool) {
+	if len(o.internalSK) == 0 {
 		return nil, false
 	}
-	return symmetric.NewAESCipher(o.sk), true
+	return symmetric.NewAESCipher(o.internalSK), true
 }
 
 // UpdateState 更新实例状态信息
 func (o *RegisteredEntity) UpdateState(state core.UpdateInfo) {
+	if o.Id != state.Id {
+		return
+	}
 	o.State.Weight = state.Weight
 }
 

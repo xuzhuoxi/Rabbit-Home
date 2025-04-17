@@ -28,7 +28,7 @@ func OnCmdList(flagSet *cmdx.FlagSetExtend, args []string) {
 	bPId := flagSet.CheckKey(listPlatformId)
 
 	entities := home.GlobalHomeServer.GetEntities(func(each home.RegisteredEntity) bool {
-		if bName && each.Name != *name {
+		if bName && each.TypeName != *name {
 			return false
 		}
 		if bOn && each.IsTimeout() != *on {

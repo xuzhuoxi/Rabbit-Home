@@ -44,22 +44,24 @@ func (l *serverUpdateHandler) ServeHTTP(writer http.ResponseWriter, request *htt
 	home.GlobalLock.Lock()
 	defer home.GlobalLock.Unlock()
 
-	// 查询已注册信息
+	// 查询已注册实例信息
 	var entity home.RegisteredEntity
 	if entity, ok = home.GlobalHomeServer.GetEntityById(id); !ok {
-		warnInfo := fmt.Sprintf("%s Update Fail: Id[%s] unregistered! ", l.logPrefix, id)
+		warnInfo := fmt.Sprintf("[%s]Update Fail: unregistered! ", id)
 		warnResponse(writer, http.StatusNotFound, core.CodeParamInvalid, warnInfo, l.logger)
 		return
 	}
 
-	// 提取更新数据
+	// 提取更新数据的字节数据，如果数据有加密，返回密钥数据
 	decryptedData, isDetail, err := l.getData(request, &entity)
 	if nil != err {
-		warnInfo := fmt.Sprintf("%s Update Fail: get data error! %v", l.logPrefix, err)
+		warnInfo := fmt.Sprintf("[%s]Update Fail: get data error! %v", id, err)
 		warnResponse(writer, http.StatusBadRequest, core.CodeParamDecrypt, warnInfo, l.logger)
 		return
 
 	}
+
+	// 解析更新数据并更新
 	info, detail := l.toInfo(decryptedData, isDetail)
 	if isDetail {
 		l.updateDetailStatus(writer, detail)
@@ -83,6 +85,7 @@ func (l *serverUpdateHandler) getId(request *http.Request) (id string, ok bool) 
 }
 
 func (l *serverUpdateHandler) getData(request *http.Request, entity *home.RegisteredEntity) (decryptedData []byte, isDetail bool, err error) {
+	// 从请求中获取更新数据并完成Base64解码
 	var bs []byte
 	if request.Method == http.MethodPost {
 		bs, err = base64FromPost(request, core.HttpKeyData)
@@ -92,13 +95,16 @@ func (l *serverUpdateHandler) getData(request *http.Request, entity *home.Regist
 	if nil != err {
 		return nil, false, err
 	}
-	cipher, aesOn := entity.GetAesCipher()
+
+	cipher, aesOn := entity.GetInternalAesCipher()
 	if aesOn && nil != cipher {
-		decryptedData, err = cipher.DecryptGCM(bs)
+		// 解密数据
+		decryptedData, err = cipher.Decrypt(bs)
 		if nil != err {
 			return nil, false, err
 		}
 	} else {
+		// 无需解密
 		decryptedData = bs
 	}
 	isDetail = l.checkDetail(request)
@@ -117,6 +123,7 @@ func (l *serverUpdateHandler) toInfo(decryptedData []byte, isDetail bool) (info 
 }
 
 func (l *serverUpdateHandler) checkDetail(request *http.Request) (isDetail bool) {
+	// 从请求中获取是否为详细更新的标志数据
 	var value []byte
 	var err error
 	if request.Method == http.MethodPost {
@@ -133,32 +140,32 @@ func (l *serverUpdateHandler) checkDetail(request *http.Request) (isDetail bool)
 
 func (l *serverUpdateHandler) updateInfoStatus(writer http.ResponseWriter, info *core.UpdateInfo) {
 	if info.IsNotValid() {
-		warnInfo := fmt.Sprintf("%s Update InfoStatus Fail: info is not valid. %v", l.logPrefix, info)
+		warnInfo := fmt.Sprintf("[%s]Update InfoStatus Fail: info is not valid. %v", info.Id, info)
 		warnResponse(writer, http.StatusBadRequest, core.CodeParamInvalid, warnInfo, l.logger)
 		return
 	}
 	ok := home.GlobalHomeServer.UpdateState(*info)
 	if !ok {
-		warnInfo := fmt.Sprintf("%s Update InfoStatus Fail: Id[%s] unregistered! ", l.logPrefix, info.Id)
+		warnInfo := fmt.Sprintf("[%s]Update InfoStatus Fail: Id[%s] unregistered! ", info.Id, info.Id)
 		warnResponse(writer, http.StatusNotFound, core.CodeParamInvalid, warnInfo, l.logger)
 		return
 	}
 	sucResponseEmpty(writer)
-	l.logger.Infoln(l.logPrefix, fmt.Sprintf("Update InfoStatus Succ: %v", info))
+	l.logger.Infoln(l.logPrefix, fmt.Sprintf("Update InfoStatus Suc: %v", info))
 }
 
 func (l *serverUpdateHandler) updateDetailStatus(writer http.ResponseWriter, detail *core.UpdateDetailInfo) {
 	if detail.IsNotValid() {
-		warnInfo := fmt.Sprintf("%s Update DetailStatus Fail: State is not valid. %v", l.logPrefix, detail)
+		warnInfo := fmt.Sprintf("[%s]Update DetailStatus Fail: Info is not valid. %v", detail.Id, detail)
 		warnResponse(writer, http.StatusBadRequest, core.CodeParamInvalid, warnInfo, l.logger)
 		return
 	}
 	ok := home.GlobalHomeServer.UpdateDetailState(*detail)
 	if !ok {
-		warnInfo := fmt.Sprintf("%s Update DetailStatus Fail: Id[%s] unregistered! ", l.logPrefix, detail.Id)
+		warnInfo := fmt.Sprintf("[%s]Update DetailStatus Fail: unregistered! ", detail.Id)
 		warnResponse(writer, http.StatusNotFound, core.CodeParamInvalid, warnInfo, l.logger)
 		return
 	}
 	sucResponseEmpty(writer)
-	l.logger.Infoln(l.logPrefix, fmt.Sprintf("Update DetailStatus Succ: %v", detail))
+	l.logger.Infoln(l.logPrefix, fmt.Sprintf("Update DetailStatus Suc: %v", detail))
 }

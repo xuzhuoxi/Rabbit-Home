@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"github.com/xuzhuoxi/Rabbit-Home/core/home"
+	"github.com/xuzhuoxi/Rabbit-Home/core/utils"
 	"github.com/xuzhuoxi/infra-go/cryptox/asymmetric"
 	"github.com/xuzhuoxi/infra-go/logx"
 	"net/http"
@@ -33,7 +34,7 @@ func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	// 提取数据
+	// 从请求中获取注册数据并完成Base64解码
 	linkInfo := &core.LinkInfo{}
 	var err0 error
 	var err1 error
@@ -51,7 +52,7 @@ func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 		return
 	}
 	if linkInfo.IsInvalid() {
-		warnInfo := fmt.Sprintf("%s Link Entity Fail: Entity is not valid. %v", l.logPrefix, linkInfo)
+		warnInfo := fmt.Sprintf("%s Link Entity Fail: Entity is invalid. %v", l.logPrefix, linkInfo)
 		warnResponse(writer, http.StatusBadRequest, core.CodeParamInvalid, warnInfo, l.logger)
 		return
 	}
@@ -76,6 +77,13 @@ func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 
 	// 更新实例列表
 	entity := home.NewRegisteredEntity(*linkInfo)
+	// 如果有w字段，更新权重
+	if len(weightBs) > 1 {
+		weight, err := strconv.ParseFloat(string(weightBs), 64)
+		if nil == err {
+			entity.UpdateState(core.UpdateInfo{Id: linkInfo.Id, Weight: weight})
+		}
+	}
 	add, err1 := home.GlobalHomeServer.AddOrReplaceEntity(entity)
 	if nil != err1 {
 		warnInfo := fmt.Sprintf("%s Link Entity Fail: %v", l.logPrefix, err1)
@@ -83,27 +91,23 @@ func (l *serverLinkHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 		return
 	}
 	backInfo := &core.LinkBackInfo{Id: linkInfo.Id}
+
+	// 生成内部(Rabbit-Home与Rabbit-Server间通信)使用的临时32位密钥
 	if kv.Enable {
-		entity.SaveShareKey(SK)
-		sharedKey, _ := rsa.Encrypt(SK)
-		backInfo.TempBase64Key = core.Base64Encoding.EncodeToString(sharedKey)
+		entity.SaveInternalSK(SK)
+		backInfo.InternalSK = SK
+	}
+
+	// 生成外部(Rabbit-Server与客户端间通信)临时密钥
+	if linkInfo.OpenKeyOn {
+		openSK := utils.DeriveRandomKey32("", linkInfo.Id)
+		entity.SaveOpenSK(openSK)
+		backInfo.OpenSK = openSK
 	}
 	if add {
 		l.logger.Infoln(l.logPrefix, fmt.Sprintf("Link Entity Succ: %v", linkInfo))
 	} else {
 		l.logger.Infoln(l.logPrefix, fmt.Sprintf("Relink Entity Succ: %v", linkInfo))
 	}
-	sucResponse(writer, backInfo, l.logger)
-
-	// 如果有w字段，更新权重
-	if len(weightBs) > 1 {
-		weight, err := strconv.ParseFloat(string(weightBs), 64)
-		if nil != err {
-			l.logger.Warnln(l.logPrefix, fmt.Sprintf("Update State After Link Fail: %v", err))
-			return
-		}
-		state := core.UpdateInfo{Id: linkInfo.Id, Weight: weight}
-		home.GlobalHomeServer.UpdateState(state)
-		l.logger.Infoln(l.logPrefix, fmt.Sprintf("Update State After Link Succ: %s", state.String()))
-	}
+	sucResponse(writer, backInfo, rsa, l.logger)
 }

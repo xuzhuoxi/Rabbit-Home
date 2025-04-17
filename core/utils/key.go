@@ -45,18 +45,18 @@ func LoadPrivateCipher(path string, keyType string) (asymmetric.IRSAPrivateCiphe
 	return privateCipher, nil
 }
 
-// DeriveTempKey
-// 派生临时密钥
+// DeriveRandomKey32
+// 派生随机32位密钥
 // 算法：
-//  1. passphrase: shareKey + linkInfo.Id + 当前时间戳
+//  1. passphrase: shareKey + privateData + 当前时间戳
 //  2. 派生密钥: key.DeriveKeyPbkdf2(passphrase, salt, iterations, keyLen)
 //		salt       = []byte("infra-go:cryptox.key")
 //		iterations = 100000
 //		keyLen     = 32
-func DeriveTempKey(shareKey string, linkInfo *core.LinkInfo) []byte {
+func DeriveRandomKey32(shareKey string, privateData string) []byte {
 	now := int64(timex.NowDuration1970())
 	buf := make([]byte, 0, 20) // 预留最多 20 字节（int64 最大长度）
 	buf = strconv.AppendInt(buf, now, 10)
-	passphrase := append(append([]byte(shareKey), []byte(linkInfo.Id)...), buf...)
+	passphrase := append(append([]byte(shareKey), []byte(privateData)...), buf...)
 	return key.DeriveKeyPbkdf2Default(passphrase)
 }

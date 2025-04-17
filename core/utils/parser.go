@@ -4,9 +4,10 @@
 package utils
 
 import (
+	"fmt"
 	"github.com/json-iterator/go"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
-	"github.com/xuzhuoxi/infra-go/cryptox/symmetric"
+	"github.com/xuzhuoxi/infra-go/cryptox"
 )
 
 // ParseHomeResponseInfo
@@ -31,15 +32,16 @@ func SerializeHomeResponseInfo(info core.HomeResponseInfo) []byte {
 // 解析字节数据为数据
 // bs: 字节数据
 // data: 结果数据结构体，要求是引用
-// aesCipher: AES加密处理器, 如果存在则在转为base后进行解密
-func ParseDate(bs []byte, data interface{}, aesCipher symmetric.IAESCipher) error {
+// decryptCipher: 解密处理器, 如果存在则在转为base后进行解密
+func ParseDate(bs []byte, data interface{}, decryptCipher cryptox.IDecryptCipher) error {
 	json, err := core.Base64Encoding.DecodeString(string(bs))
 	if nil != err {
 		return err
 	}
-	if nil != aesCipher {
-		json, err = aesCipher.DecryptGCM(json)
+	if nil != decryptCipher {
+		json, err = decryptCipher.Decrypt(json)
 		if nil != err {
+			fmt.Println("2")
 			return err
 		}
 	}
@@ -53,14 +55,14 @@ func ParseDate(bs []byte, data interface{}, aesCipher symmetric.IAESCipher) erro
 // SerializeData
 // 序列化数据为字节数据
 // data: 结构体数据
-// aesCipher: AES加密处理器, 如果存在则在转为base前进行加密
-func SerializeData(data interface{}, aesCipher symmetric.IAESCipher) ([]byte, error) {
+// encryptCipher: 加密处理器, 如果存在则在转为base前进行加密
+func SerializeData(data interface{}, encryptCipher cryptox.IEncryptCipher) ([]byte, error) {
 	json, err := jsoniter.Marshal(data)
 	if nil != err {
 		return nil, err
 	}
-	if nil != aesCipher {
-		json, err = aesCipher.EncryptGCM(json)
+	if nil != encryptCipher {
+		json, err = encryptCipher.Encrypt(json)
 		if nil != err {
 			return nil, err
 		}

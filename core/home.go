@@ -3,12 +3,19 @@
 // @author xuzhuoxi
 package core
 
-import "encoding/base64"
+import (
+	"encoding/base64"
+	"fmt"
+)
 
 type HomeResponseInfo struct {
 	ExtCode int    `json:"code"`  // 扩展码
 	Info    string `json:"value"` // 通常为通过base64转化的josn字符器
 	Other   string `json:"other"` // 通常为通过base64转化的josn字符器
+}
+
+func (h HomeResponseInfo) String() string {
+	return fmt.Sprintf("HomeResponseInfo{ExtCode=%d,Info='%s',Other='%s'}", h.ExtCode, h.Info, h.Other)
 }
 
 var (
@@ -62,6 +69,7 @@ const (
 
 	CodePrivateKeyLack
 	CodeEntityQueryFail
+	CodeEntityQueryFailKey
 )
 
 // 与 Rabbit-Client 通信 ---------- ---------- ---------- ---------- ---------- ----------

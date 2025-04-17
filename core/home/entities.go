@@ -5,6 +5,7 @@ package home
 
 import (
 	"errors"
+	"fmt"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"sort"
 	"sync"
@@ -52,10 +53,10 @@ type IEntityStateUpdate interface {
 
 // IEntityQuery 查询实例接口
 type IEntityQuery interface {
+	// SetSortFunc 设置排序函数
+	SetSortFunc(f FuncSortEntity)
 	// QuerySmartEntity 查询最好的实例
-	QuerySmartEntity() (entity RegisteredEntity, ok bool)
-	// QueryEntity 根据name与platformId查询最好的实例
-	QueryEntity(name string, platformId string) (entity RegisteredEntity, ok bool)
+	QuerySmartEntity(platformId string, typeName string) (entity RegisteredEntity, ok bool)
 }
 
 // IEntityList 实例列表
@@ -68,12 +69,16 @@ type IEntityList interface {
 }
 
 func NewEntityList() IEntityList {
-	return &EntityList{}
+	return &EntityList{
+		Entities: make([]*RegisteredEntity, 0, 128),
+		funcSort: DefaultFuncSortEntity,
+	}
 }
 
 type EntityList struct {
 	Entities []*RegisteredEntity // 实例列表
-	lock     sync.RWMutex        // 读写锁
+	funcSort FuncSortEntity
+	lock     sync.RWMutex // 读写锁
 }
 
 func (o *EntityList) Size() int {
@@ -88,14 +93,14 @@ func (o *EntityList) GetEntityById(id string) (entity RegisteredEntity, ok bool)
 	}
 	o.lock.RLock()
 	defer o.lock.RUnlock()
-	found, idx := o.findEntity(func(each *RegisteredEntity) bool {
+	index := o.findEntity(func(each *RegisteredEntity) bool {
 		if each.Id == id {
 			return true
 		}
 		return false
 	})
-	if idx != -1 {
-		return *found, true
+	if index != -1 {
+		return *o.Entities[index], true
 	}
 	return EntityEmpty, false
 }
@@ -122,7 +127,7 @@ func (o *EntityList) GetEntityByName(name string) (entity []RegisteredEntity) {
 	defer o.lock.RUnlock()
 	var rs []RegisteredEntity
 	for index := range o.Entities {
-		if o.Entities[index].Name == name {
+		if o.Entities[index].TypeName == name {
 			rs = append(rs, *o.Entities[index])
 		}
 	}
@@ -150,7 +155,7 @@ func (o *EntityList) AddEntity(entity *RegisteredEntity) error {
 	}
 	o.lock.Lock()
 	defer o.lock.Unlock()
-	_, index := o.findEntity(func(each *RegisteredEntity) bool {
+	index := o.findEntity(func(each *RegisteredEntity) bool {
 		return each.Id == entity.Id
 	})
 	if index != -1 {
@@ -166,7 +171,7 @@ func (o *EntityList) ReplaceEntity(entity *RegisteredEntity) error {
 	}
 	o.lock.Lock()
 	defer o.lock.Unlock()
-	_, index := o.findEntity(func(each *RegisteredEntity) bool {
+	index := o.findEntity(func(each *RegisteredEntity) bool {
 		return each.Id == entity.Id
 	})
 	if index == -1 {
@@ -182,7 +187,7 @@ func (o *EntityList) AddOrReplaceEntity(entity *RegisteredEntity) (add bool, err
 	}
 	o.lock.Lock()
 	defer o.lock.Unlock()
-	_, index := o.findEntity(func(each *RegisteredEntity) bool {
+	index := o.findEntity(func(each *RegisteredEntity) bool {
 		return each.Id == entity.Id
 	})
 	if index != -1 {
@@ -216,11 +221,11 @@ func (o *EntityList) UpdateState(state core.UpdateInfo) bool {
 	}
 	o.lock.Lock()
 	defer o.lock.Unlock()
-	entity, index := o.findEntity(func(each *RegisteredEntity) bool {
+	index := o.findEntity(func(each *RegisteredEntity) bool {
 		return each.Id == state.Id
 	})
 	if index != -1 {
-		entity.UpdateState(state)
+		o.Entities[index].UpdateState(state)
 		return true
 	}
 	return false
@@ -232,46 +237,48 @@ func (o *EntityList) UpdateDetailState(detail core.UpdateDetailInfo) bool {
 	}
 	o.lock.Lock()
 	defer o.lock.Unlock()
-	entity, index := o.findEntity(func(each *RegisteredEntity) bool {
+	index := o.findEntity(func(each *RegisteredEntity) bool {
 		return each.Id == detail.Id
 	})
 	if index != -1 {
-		entity.UpdateDetailState(detail)
+		o.Entities[index].UpdateDetailState(detail)
 		return true
 	}
 	return false
 }
 
-func (o *EntityList) QuerySmartEntity() (entity RegisteredEntity, ok bool) {
+func (o *EntityList) SetSortFunc(f FuncSortEntity) {
+	if nil == f {
+		return
+	}
 	o.lock.Lock()
 	defer o.lock.Unlock()
-	o.clearTimeoutEntities()
-	return o.queryEntities(o.Entities)
+	o.funcSort = f
 }
 
-func (o *EntityList) QueryEntity(name string, platformId string) (entity RegisteredEntity, ok bool) {
+func (o *EntityList) QuerySmartEntity(platformId string, typeName string) (entity RegisteredEntity, ok bool) {
 	o.lock.Lock()
 	defer o.lock.Unlock()
 	o.clearTimeoutEntities()
-	entities := o.getEntities(func(each RegisteredEntity) bool {
-		return each.Name == name && each.PlatformId == platformId
+	entities := o.getEntities(func(each *RegisteredEntity) bool {
+		return each.PlatformId == platformId && each.TypeName == typeName
 	})
 	return o.queryEntities(entities)
 }
 
-func (o *EntityList) findEntity(funcEach funcEach) (entity *RegisteredEntity, index int) {
+func (o *EntityList) findEntity(funcEach funcEach) (index int) {
 	for index := range o.Entities {
 		if funcEach(o.Entities[index]) {
-			return o.Entities[index], index
+			return index
 		}
 	}
 	index = -1
 	return
 }
 
-func (o *EntityList) getEntities(funcEach FuncEach) (entities []*RegisteredEntity) {
+func (o *EntityList) getEntities(funcEach funcEach) (entities []*RegisteredEntity) {
 	for index := range o.Entities {
-		if funcEach(*o.Entities[index]) {
+		if funcEach(o.Entities[index]) {
 			entities = append(entities, o.Entities[index])
 		}
 	}
@@ -282,9 +289,12 @@ func (o *EntityList) queryEntities(entities []*RegisteredEntity) (entity Registe
 	if len(entities) == 0 {
 		return EntityEmpty, false
 	}
-	sort.Sort(sortLinkList(entities))
-	o.Entities[0].AddHit()
-	entity = *o.Entities[0]
+	sort.Slice(entities, func(i, j int) bool {
+		return o.funcSort(entities[i], entities[j])
+	})
+	fmt.Println("Sort:", entities)
+	entities[0].AddHit()
+	entity = *entities[0]
 	return entity, true
 }
 

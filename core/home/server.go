@@ -67,7 +67,7 @@ func (o *RabbitHomeServer) Init() {
 		return
 	}
 	o.HttpServer = httpx.NewHttpServer().(*httpx.HttpServer)
-	for _, handler := range MapHandlerList {
+	for _, handler := range mapHandlerList {
 		o.HttpServer.MapHandle(handler.Pattern, handler.Handler())
 	}
 }
@@ -150,12 +150,12 @@ func (o *RabbitHomeServer) UpdateDetailState(detail core.UpdateDetailInfo) bool 
 	return o.EntityList.UpdateDetailState(detail)
 }
 
-func (o *RabbitHomeServer) QuerySmartEntity() (entity RegisteredEntity, ok bool) {
-	return o.EntityList.QuerySmartEntity()
+func (o *RabbitHomeServer) SetSortFunc(f FuncSortEntity) {
+	o.EntityList.SetSortFunc(f)
 }
 
-func (o *RabbitHomeServer) QueryEntity(name string, platformId string) (entity RegisteredEntity, ok bool) {
-	return o.EntityList.QueryEntity(name, platformId)
+func (o *RabbitHomeServer) QuerySmartEntity(platformId string, typeName string) (entity RegisteredEntity, ok bool) {
+	return o.EntityList.QuerySmartEntity(platformId, typeName)
 }
 
 // -------------------------
@@ -191,46 +191,4 @@ func (o *RabbitHomeServer) stop() error {
 		return errors.New("HttpServer is not running! ")
 	}
 	return o.HttpServer.StopServer()
-}
-
-// Private
-
-type sortWeightList []*RegisteredEntity
-
-func (o sortWeightList) Len() int {
-	return len(o)
-}
-
-func (o sortWeightList) Less(i, j int) bool {
-	bi := o[i].IsTimeout()
-	bj := o[j].IsTimeout()
-	if bi == bj {
-		if o[i].State.Weight != o[j].State.Weight {
-			return o[i].State.Weight < o[j].State.Weight
-		}
-		return o[i].hit < o[j].hit
-	} else {
-		return bj
-	}
-}
-
-func (o sortWeightList) Swap(i, j int) {
-	o[i], o[j] = o[j], o[i]
-}
-
-type sortLinkList []*RegisteredEntity
-
-func (o sortLinkList) Len() int {
-	return len(o)
-}
-
-func (o sortLinkList) Less(i, j int) bool {
-	if o[i].Detail.Links != o[j].Detail.Links {
-		return o[i].Detail.Links < o[j].Detail.Links
-	}
-	return o[i].hit < o[j].hit
-}
-
-func (o sortLinkList) Swap(i, j int) {
-	o[i], o[j] = o[j], o[i]
 }

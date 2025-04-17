@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	setSortFunc()
 	showHomeInfo()
 	registerHomeServices()
 	runRabbitHome()
@@ -23,6 +24,10 @@ func registerHomeServices() {
 	home.RegisterMapHandler(home.PatternUpdate, service.NewServiceUpdateHandler)
 	home.RegisterMapHandler(home.PatternUnlink, service.NewServiceUnlinkHandler)
 	home.RegisterMapHandler(home.PatternRoute, service.NewServiceRouteHandler)
+}
+
+func setSortFunc() {
+	home.SetDefaultFuncSortEntity(home.WeightLess)
 }
 
 func runRabbitHome() {

@@ -4,7 +4,10 @@
 package core
 
 import (
+	"errors"
 	"fmt"
+	"github.com/xuzhuoxi/infra-go/cryptox/symmetric"
+	"strconv"
 	"time"
 )
 
@@ -24,25 +27,26 @@ type ISignatureInfo interface {
 type LinkInfo struct {
 	Id          string `json:"id"`           // 实例Id(唯一)
 	PlatformId  string `json:"pid"`          // 平台Id
-	Name        string `json:"name"`         // 实例类型名称(不唯一)
+	TypeName    string `json:"type-name"`    // 实例类型名称(不唯一)
 	OpenNetwork string `json:"open-network"` // 开放连接通信协议
 	OpenAddr    string `json:"open-addr"`    // 开放连接地址
+	OpenKeyOn   bool   `json:"open-key-on"`  // 针对客户端是否启用密钥验证
 	Signature   string `json:"signature"`    // 签名
 }
 
 func (o *LinkInfo) String() string {
 	return fmt.Sprintf("{Id=%s,PId=%s,Name=%s,Network=%s,Addr=%s,Signature=%s}",
-		o.Id, o.PlatformId, o.Name, o.OpenNetwork, o.OpenAddr, o.Signature)
+		o.Id, o.PlatformId, o.TypeName, o.OpenNetwork, o.OpenAddr, o.Signature)
 }
 
 // IsInvalid 是否为未验证
 func (o *LinkInfo) IsInvalid() bool {
-	return len(o.Id) == 0 || len(o.Name) == 0
+	return len(o.Id) == 0 || len(o.TypeName) == 0
 }
 
 func (o *LinkInfo) OriginalSignData() []byte {
 	original := []byte(Base64Encoding.EncodeToString([]byte(
-		fmt.Sprintf("I=%s,P=%s,N=%s,ON=%s,OA=%s", o.Id, o.PlatformId, o.Name, o.OpenNetwork, o.OpenAddr))))
+		fmt.Sprintf("I=%s,P=%s,N=%s,ON=%s,OA=%s", o.Id, o.PlatformId, o.TypeName, o.OpenNetwork, o.OpenAddr))))
 	return original
 }
 
@@ -51,11 +55,12 @@ func (o *LinkInfo) SignatureData() string {
 }
 
 // LinkBackInfo
-// 连接结果信息，从Rabbit-Home返回
+// 连接结果信息，从Rabbit-Home返回, 经过RSA加密
 type LinkBackInfo struct {
-	Id            string `json:"id"`       // 实例Id(唯一)
-	TempBase64Key string `json:"temp-key"` // 临时密钥，用于对称加密数据, 这里的是Base64字符串
-	Extend        string `json:"extend"`   // 扩展信息
+	Id         string `json:"id"`          // 实例Id(唯一), 明文
+	InternalSK []byte `json:"internal-sk"` // 临时RSA密钥, 用于内部加密, []byte
+	OpenSK     []byte `json:"open-sk"`     // 临时RSA密钥, 用于外部加密, []byte
+	Extend     string `json:"extend"`      // 扩展信息, 明文
 }
 
 // Unlink ---------- ---------- ---------- ---------- ----------
@@ -63,7 +68,7 @@ type LinkBackInfo struct {
 // UnlinkInfo
 // 通知Rabbit-Home断开连接的信息
 type UnlinkInfo struct {
-	Id        string `json:"id"`        // 实例Id(唯一)
+	Id        string `json:"id"`        // 实例Id(唯一),明文
 	Signature string `json:"signature"` // 签名
 }
 
@@ -78,8 +83,8 @@ func (o *UnlinkInfo) SignatureData() string {
 // UnlinkBackInfo
 // 通知Rabbit-Home断开连接的结果信息，从Rabbit-Home返回
 type UnlinkBackInfo struct {
-	Id     string `json:"id"`     // 实例Id(唯一)
-	Extend string `json:"extend"` // 扩展信息
+	Id     string `json:"id"`     // 实例Id(唯一)，明文
+	Extend string `json:"extend"` // 扩展信息，明文
 }
 
 // Update ---------- ---------- ---------- ---------- ----------
@@ -130,16 +135,47 @@ func (o *UpdateDetailInfo) IsNotValid() bool {
 
 // Route ---------- ---------- ---------- ---------- ----------
 
-type QueryInfo struct {
-	Name       string `json:"type"` // 类型名称
-	PlatformId string `json:"pid"`  // 服务平台Id
+type QueryRouteInfo struct {
+	PlatformId string `json:"pid"`       // 服务平台Id
+	TypeName   string `json:"type-name"` // 类型名称
+	TempAesKey []byte `json:"temp-key"`  // 临时AES密钥，用于Rabbit-Home返回数据时加密, 如果不提供，返回的密钥数据将以Base64字符串返回
 }
 
-type QueryBackInfo struct {
-	Id          string `json:"id"`           // 实例Id(唯一)
-	PlatformId  string `json:"pid"`          // 服务平台Id
-	Name        string `json:"name"`         // 实例类型名称(不唯一)
-	OpenNetwork string `json:"open-network"` // 开放连接通信协议
-	OpenAddr    string `json:"open-addr"`    // 开放连接地址
-	TempKey     string `json:"temp-key"`     // 临时密钥，用于对称加密数据
+type QueryRouteBackInfo struct {
+	Id           string `json:"id"`           // 实例Id(唯一)
+	PlatformId   string `json:"pid"`          // 服务平台Id
+	TypeName     string `json:"type-name"`    // 实例类型名称(不唯一)
+	OpenNetwork  string `json:"open-network"` // 开放连接通信协议
+	OpenAddr     string `json:"open-addr"`    // 开放连接地址
+	OpenKeyOn    bool   `json:"open-key-on"`  // 针对客户端是否启用密钥验证
+	OpenBase64SK string `json:"open-sk"`      // 临时密钥的Base64字符串表示，用于对称加密数据。如果请求时有设置临时密钥，则经过加密
+	OpenSK       []byte
+}
+
+func (q *QueryRouteBackInfo) HandleOpenSK(tempAesKey []byte) error {
+	if len(q.OpenBase64SK) == 0 || !q.OpenKeyOn {
+		return nil
+	}
+	openSK, err := Base64Encoding.DecodeString(q.OpenBase64SK)
+	if nil != err {
+		return err
+	}
+	if len(tempAesKey) == 0 {
+		q.OpenSK = openSK
+		return nil
+	}
+	if len(tempAesKey) == 32 {
+		openSK, err = symmetric.NewAESCipher(tempAesKey).Decrypt(openSK)
+		if nil != err {
+			return err
+		}
+		q.OpenSK = openSK
+		return nil
+	}
+	return errors.New("TempAesKey size error:" + strconv.Itoa(len(tempAesKey)))
+}
+
+func (q *QueryRouteBackInfo) String() string {
+	return fmt.Sprintf("{Id=%s，PId=%s, T=%s, Network=%s, Addr=%s, OpenBase64SK=%s}",
+		q.Id, q.PlatformId, q.TypeName, q.OpenNetwork, q.OpenAddr, q.OpenBase64SK)
 }

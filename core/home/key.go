@@ -88,7 +88,7 @@ func (o *RabbitHomeKeys) VerifyLinkSign(linkInfo *core.LinkInfo) (rsaPublicCiphe
 	}
 	return nil, nil, false
 Pass:
-	SK = utils.DeriveTempKey(GlobalHomeConfig.InternalVerifier.KeyVerifier.Share, linkInfo)
+	SK = utils.DeriveRandomKey32(GlobalHomeConfig.InternalVerifier.KeyVerifier.Share, linkInfo.Id)
 	return rsaPublicCipher, SK, pass
 }
 

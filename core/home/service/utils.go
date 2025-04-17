@@ -7,6 +7,7 @@ import (
 	"github.com/json-iterator/go"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"github.com/xuzhuoxi/Rabbit-Home/core/utils"
+	"github.com/xuzhuoxi/infra-go/cryptox"
 	"github.com/xuzhuoxi/infra-go/logx"
 	"net"
 	"net/http"
@@ -25,17 +26,22 @@ func warnResponse(writer http.ResponseWriter, httpStatusCode int, extCode int, w
 	writer.Write(base64Data)
 }
 
-func sucResponse(writer http.ResponseWriter, respData interface{}, logger logx.ILogger) {
-	json, err := jsoniter.Marshal(respData)
-	if nil != err {
-		if nil != logger {
-			logger.Warnln("[sucResponse]", err)
+func sucResponse(writer http.ResponseWriter, respData interface{}, cipher cryptox.IEncryptCipher, logger logx.ILogger) {
+	var json []byte
+	var err1, err2 error
+	json, err1 = jsoniter.Marshal(respData)
+	if nil == err1 {
+		if nil != cipher {
+			json, err2 = cipher.Encrypt(json)
 		}
-		json = empty
 	}
-	base64Data := core.Base64Encoding.EncodeToString(json)
 	writer.WriteHeader(http.StatusOK)
-	writer.Write([]byte(base64Data))
+	if nil == err1 || nil == err2 {
+		base64Data := core.Base64Encoding.EncodeToString(json)
+		writer.Write([]byte(base64Data))
+	} else {
+		writer.Write(empty)
+	}
 }
 func sucResponseEmpty(writer http.ResponseWriter) {
 	writer.WriteHeader(http.StatusOK)

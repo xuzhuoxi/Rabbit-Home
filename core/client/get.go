@@ -8,10 +8,9 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"github.com/xuzhuoxi/Rabbit-Home/core/home"
-	"github.com/xuzhuoxi/Rabbit-Home/core/utils"
+	"github.com/xuzhuoxi/infra-go/cryptox/asymmetric"
 	"github.com/xuzhuoxi/infra-go/cryptox/symmetric"
 	"github.com/xuzhuoxi/infra-go/netx/httpx"
-	"net/http"
 	"strconv"
 )
 
@@ -38,23 +37,6 @@ func LinkWithGet(homeAddrUrl string, info core.LinkInfo, weight float64, cb http
 	return httpx.HttpGet(httpUrl, cb)
 }
 
-// ParseLinkBackInfo 解析连接返回信息
-// sucBackInfo: 连接成功返回信息
-// failBackInfo: 连接失败返回信息
-// err: 数据处理失败错误
-func ParseLinkBackInfo(res *http.Response, body *[]byte) (sucBackInfo *core.LinkBackInfo, failBackInfo *core.HomeResponseInfo, err error) {
-	if res.StatusCode != http.StatusOK {
-		failBackInfo, err = utils.ParseHomeResponseInfo(*body)
-		return
-	}
-	sucBackInfo = &core.LinkBackInfo{}
-	err = utils.ParseDate(*body, sucBackInfo, nil)
-	if nil != err {
-		return nil, nil, err
-	}
-	return
-}
-
 // UnlinkWithGet 断开与 Rabbit-Home 服务器的连接
 // homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUnlink，即"/unlink"
 // info: 移除服务器必要信息
@@ -71,23 +53,6 @@ func UnlinkWithGet(homeAddrUrl string, info core.UnlinkInfo, cb httpx.ReqCallBac
 	return httpx.HttpGet(httpUrl, cb)
 }
 
-// ParseUnlinkBackInfo 解析取消连接返回信息
-// sucBackInfo: 连接成功返回信息
-// failBackInfo: 连接失败返回信息
-// err: 数据处理失败错误
-func ParseUnlinkBackInfo(res *http.Response, body *[]byte) (sucBackInfo *core.UnlinkBackInfo, failBackInfo *core.HomeResponseInfo, err error) {
-	if res.StatusCode != http.StatusOK {
-		failBackInfo, err = utils.ParseHomeResponseInfo(*body)
-		return
-	}
-	sucBackInfo = &core.UnlinkBackInfo{}
-	err = utils.ParseDate(*body, sucBackInfo, nil)
-	if nil != err {
-		return nil, nil, err
-	}
-	return
-}
-
 // UpdateWithGet 更新服务器状态
 // homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUpdate，即"/update"
 // info: 实例基本状态
@@ -101,14 +66,15 @@ func UpdateWithGet(homeAddrUrl string, info core.UpdateInfo, aesCipher symmetric
 		return err
 	}
 	if nil != aesCipher {
-		bs, err = aesCipher.EncryptGCM(bs)
+		bs, err = aesCipher.Encrypt(bs)
 		if nil != err {
 			return err
 		}
 	}
+	//fmt.Println("UpdateWithGet: bs=", info, bs)
 	data := core.Base64Encoding.EncodeToString(bs)
 	httpUrl := homeAddrUrl + home.PatternUpdate + fmt.Sprintf("?%s=%s&%s=%s", core.HttpKeyId, id, core.HttpKeyData, data)
-	//fmt.Println("UpdateUrl:", info, nil != aesCipher, httpUrl)
+	//fmt.Println("UpdateWithGet: url=", info, nil != aesCipher, bs, httpUrl)
 	return httpx.HttpGet(httpUrl, cb)
 }
 
@@ -124,7 +90,7 @@ func UpdateDetailWithGet(homeAddrUrl string, detail core.UpdateDetailInfo, aesCi
 		return err
 	}
 	if nil != aesCipher {
-		bs, err = aesCipher.EncryptGCM(bs)
+		bs, err = aesCipher.Encrypt(bs)
 		if nil != err {
 			return err
 		}
@@ -135,23 +101,24 @@ func UpdateDetailWithGet(homeAddrUrl string, detail core.UpdateDetailInfo, aesCi
 	return httpx.HttpGet(httpUrl, cb)
 }
 
-// ParseUpdateBackInfo 解析更新返回信息
-// failBackInfo: 更新失败返回信息
-// err: 数据处理失败错误
-// 更新成功时不返回任何信息
-func ParseUpdateBackInfo(res *http.Response, body *[]byte, aesCipher symmetric.IAESCipher) (failBackInfo *core.HomeResponseInfo, err error) {
-	if res.StatusCode != http.StatusOK {
-		failBackInfo, err = utils.ParseHomeResponseInfo(*body)
-		return
-	}
-	return nil, nil
-}
-
-// RouteWithGet 路由请求，获得合适的服务器实例信息
-// homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternRoute，即"/route"
+// QueryRouteWithGet 路由请求，获得合适的服务器实例信息
+// homeAddrUrl: Rabbit-Home服务器地址，不需要包含Pattern, 实际Pattern是home.PatternRoute，即"/route"
+// queryRoute: 路由请求信息
+// rsaPublicCipher: RSA加密处理器，传入nil表示不加密. 公钥属于Rabbit-Home
 // cb: 回调，传入nil表示不处理
 // 返回值: 如果调用出现错误，则返回错误信息
-func RouteWithGet(homeAddrUrl string, cb httpx.ReqCallBack) error {
-	httpUrl := homeAddrUrl + home.PatternRoute
+func QueryRouteWithGet(homeAddrUrl string, queryRoute core.QueryRouteInfo, publicRsaCipher asymmetric.IRSAPublicCipher, cb httpx.ReqCallBack) error {
+	bs, err := jsoniter.Marshal(queryRoute)
+	if nil != err {
+		return err
+	}
+	if nil != publicRsaCipher {
+		bs, err = publicRsaCipher.Encrypt(bs)
+		if nil != err {
+			return err
+		}
+	}
+	date := core.Base64Encoding.EncodeToString(bs)
+	httpUrl := homeAddrUrl + home.PatternRoute + fmt.Sprintf("?%s=%s", core.HttpKeyQuery, date)
 	return httpx.HttpGet(httpUrl, cb)
 }

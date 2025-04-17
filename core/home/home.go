@@ -34,7 +34,7 @@ type mapHandleInfo struct {
 }
 
 var (
-	MapHandlerList []mapHandleInfo
+	mapHandlerList []mapHandleInfo
 )
 
 func init() {
@@ -44,7 +44,7 @@ func init() {
 
 // RegisterMapHandler 注册处理响应器
 func RegisterMapHandler(pattern string, newHandler func() http.Handler) {
-	MapHandlerList = append(MapHandlerList, mapHandleInfo{Pattern: pattern, Handler: newHandler})
+	mapHandlerList = append(mapHandlerList, mapHandleInfo{Pattern: pattern, Handler: newHandler})
 }
 
 // StartHomeServer 启动服务器
