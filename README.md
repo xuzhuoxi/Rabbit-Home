@@ -24,7 +24,7 @@ src/
 LICENSE             // 授权协议文件
 README.md           // 中文项目介绍说明文件
 README_EN.md        // 英文项目介绍说明文件
-README_EN.md        // 备忘录文档
+REMARK.md        // 备忘录文档
 ```
 
 - **core**: 核心包，包含了客户端、命令行、配置管理和服务器相关的逻辑。
@@ -48,7 +48,7 @@ README_EN.md        // 备忘录文档
 - 通过gopath加载仓库
 ``` bash
 go get -u github.com/xuzhuoxi/Rabbit-Home
-```   
+```
 
 - 通过go.mod加载仓库
   克隆项目到本地并安装依赖
@@ -537,7 +537,7 @@ type QueryRouteBackInfo struct {
   YAML配置解析库
 
 
-## 9. 联系任务
+## 9. 联系作者
 xuzhuoxi<br>
 <xuzhuoxi@gmail.com> or <mailxuzhuoxi@163.com> or <m_xuzhuoxi@outlook.com>
 
