@@ -14,7 +14,7 @@ import (
 	"strconv"
 )
 
-// LinkWithPost 连接到 Rabbit-Home 服务器
+// LinkWithPost 注册到 Rabbit-Home 服务器
 // homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternLink，即"/link"
 // info: 游戏服务器实例基本信息,
 //   注意：info中的Signature数据在启用签名认证时，必须设置
@@ -35,7 +35,7 @@ func LinkWithPost(homeAddrUrl string, info core.LinkInfo, weight float64, cb htt
 	return httpx.HttpPostForm(httpUrl, value, cb)
 }
 
-// UnlinkWithPost 断开与 Rabbit-Home 服务器的连接
+// UnlinkWithPost 从 Rabbit-Home 服务器上注销
 // homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUnlink，即"/unlink"
 // info: 移除服务器必要信息
 //   注意：info中的Signature数据在启用签名认证时，必须设置
@@ -53,7 +53,7 @@ func UnlinkWithPost(homeAddrUrl string, info core.UnlinkInfo, cb httpx.ReqCallBa
 	return httpx.HttpPostForm(httpUrl, value, cb)
 }
 
-// UpdateWithPost 更新服务器状态
+// UpdateWithPost 更新Rabbit-Home服务器上的简单信息
 // homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternRoute，即"/route"
 // info: 服务器状态信息
 // cb: 回调，传入nil表示不处理
@@ -78,7 +78,7 @@ func UpdateWithPost(homeAddrUrl string, info core.UpdateInfo, aesCipher symmetri
 	return httpx.HttpPostForm(httpUrl, value, cb)
 }
 
-// UpdateDetailWithPost 更新服务器状态
+// UpdateDetailWithPost 更新Rabbit-Home服务器上的详细信息
 // homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternRoute，即"/route"
 // detail: 服务器详细状态信息
 // cb: 回调，传入nil表示不处理

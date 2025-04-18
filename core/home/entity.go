@@ -23,9 +23,9 @@ func NewRegisteredEntity(entity core.LinkInfo) *RegisteredEntity {
 
 // RegisteredEntity 已注册实例
 type RegisteredEntity struct {
-	core.LinkInfo
-	State  core.UpdateInfo       // 实例简单状态
-	Detail core.UpdateDetailInfo // 实例详细状态
+	core.LinkInfo                       // 由 Rabbit-Server 发送来的信息
+	State         core.UpdateInfo       // 实例简单状态
+	Detail        core.UpdateDetailInfo // 实例详细状态
 
 	internalSK       []byte // 内部临时对称密钥
 	internalBase64SK string // 内部临时对称密钥base64字符串

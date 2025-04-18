@@ -18,7 +18,7 @@ var (
 	isDetail = core.Base64Encoding.EncodeToString([]byte("1"))
 )
 
-// LinkWithGet 连接到 Rabbit-Home 服务器
+// LinkWithGet 注册到 Rabbit-Home 服务器
 // homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternLink，即"/link"
 // info: 游戏服务器实例基本信息
 //   注意：info中的Signature数据在启用签名认证时，必须设置
@@ -37,7 +37,7 @@ func LinkWithGet(homeAddrUrl string, info core.LinkInfo, weight float64, cb http
 	return httpx.HttpGet(httpUrl, cb)
 }
 
-// UnlinkWithGet 断开与 Rabbit-Home 服务器的连接
+// UnlinkWithGet 从 Rabbit-Home 服务器上注销
 // homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUnlink，即"/unlink"
 // info: 移除服务器必要信息
 //   注意：info中的Signature数据在启用签名认证时，必须设置
@@ -53,7 +53,7 @@ func UnlinkWithGet(homeAddrUrl string, info core.UnlinkInfo, cb httpx.ReqCallBac
 	return httpx.HttpGet(httpUrl, cb)
 }
 
-// UpdateWithGet 更新服务器状态
+// UpdateWithGet 更新Rabbit-Home服务器上的简单信息
 // homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUpdate，即"/update"
 // info: 实例基本状态
 // aesCipher: AES加密处理器，传入nil表示不加密
@@ -78,7 +78,7 @@ func UpdateWithGet(homeAddrUrl string, info core.UpdateInfo, aesCipher symmetric
 	return httpx.HttpGet(httpUrl, cb)
 }
 
-// UpdateDetailWithGet 更新服务器详细状态
+// UpdateDetailWithGet 更新Rabbit-Home服务器上的详细信息
 // homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUpdate，即"/update"
 // detail: 实例详细状态
 // cb: 回调，传入nil表示不处理

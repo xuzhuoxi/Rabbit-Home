@@ -2,10 +2,10 @@
 
 [English](./README_EN.md) | 简体中文
 
-## 简介
+## 1. 简介
 Rabbit-Home 是一个用于管理和监控服务器实例的项目。它支持通过命令行和HTTP请求来管理服务器实例，包括连接、断开连接、更新状态、查询信息和踢除实例等功能。
 
-## 项目结构
+## 2. 项目结构
 
 ```yaml
 core/               // Rabbit-Home 项目的核心部分，包含了客户端、命令行、配置管理和服务器相关的逻辑。
@@ -21,6 +21,10 @@ res/
 src/
 ├── main.go         // 项目的入口文件，启动服务器并开始命令行监听。
 └── main_test.go    // 测试用例，用于测试连接功能。
+LICENSE             // 授权协议文件
+README.md           // 中文项目介绍说明文件
+README_EN.md        // 英文项目介绍说明文件
+README_EN.md        // 备忘录文档
 ```
 
 - **core**: 核心包，包含了客户端、命令行、配置管理和服务器相关的逻辑。
@@ -35,7 +39,7 @@ src/
   + **main.go**: 项目的入口文件，启动服务器并开始命令行监听。
   + **main_test.go**: 测试用例，用于测试连接功能。
 
-## 安装和运行
+## 3. 安装和运行
 通过 `go mod` 或 克隆整个仓库到 `gopath` 中便在项目中使用 Rabbit-Home.
 
 ### 安装
@@ -59,10 +63,70 @@ go mod tidy
 go run src/main.go
 ```
 
-## 配置
+## 4. 概要说明
+
+### 功能
+- Rabbit-Server 向 Rabbit-Home 注册自己信息。
+- Rabbit-Server 向 Rabbit-Home 更新自己信息状态。
+- Rabbit-Server 向 Rabbit-Home 注销自己。
+- 客户端 向 Rabbit-Home 查询适合的 Rabbit-Server 服务器实例信息。
+- 以上功能均支持开启密钥验证。
+
+### 功能图示
+```mermaid
+sequenceDiagram
+    participant User as User-Client
+    participant Home as Rabbit-Home
+    participant Server as Rabbit-Server
+
+    %% --- 注册流程 ---
+    note left of Home: 持有Rabbit-Server的公钥
+    note right of Server: <==注册流程开始
+    Server->>Home: 1.发送 LinkInfo<br>Signature字段：使用私钥对LinkInfo的签名
+    alt  验证成功，返回HTTP状态码=200
+      Home->>Server: 2.返回 LinkBackInfo, 使用Server的公钥加密<br>InternalSK:后续与Home通信的密钥<br>OpenSK:后续与User通信的密钥<br>
+    else 验证不成功，返回HTTP状态码!=200
+      Home->>Server: 2.返回 HomeResponseInfo, 不加密<br>ExtCode:逻辑错误码<br>Info:错误信息<br>
+    end
+    note right of Server: <==注册流程结束
+    
+    %% --- 更新流程 ---
+    loop 持续间隔更新
+      note right of Server: 持续间隔更新
+      Server->>Home: 3.发送 UpdateInfo或UpdateDetailInfo<br>使用InternalSK作为AES密钥加密UpdateInfo
+      alt 更新成功，返回HTTP状态码=200
+        Home->>Server: 4.返回空数据, HttpCode:200
+      else 更新失败，返回HTTP状态码!=200
+        Home->>Server: 4.返回 HomeResponseInfo
+      end
+    end
+    
+    %% --- 路由查询流程 ---
+    note left of User: 持有Rabbit-Home的公钥
+    par 用户查询适合服务器 
+      User ->>Home: 5.发送 QueryRouteInfo, 使用Rabbit-Home的公钥加密<br>TempAesKey: 为临时生成的AES密钥
+      alt 验证通过且查找到合适服务器结果，返回HTTP状态码=200
+        Home->>User: 6.返回 QueryRouteBackInfo, 不加密<br>OpenKeyOn: 表示Server是否启用密钥验证<br>OpenBase64SK: 与Server通信用的密钥Base64字符串
+      else 验证不通过或未找到合适服务器, 返回HTTP状态码!=200
+        Home->>User: 6.返回 HomeResponseInfo
+      end
+    end
+    
+    %% --- 注销流程 ---
+    note right of Server: <==注销流程开始
+    Server->>Home: 7.发送 UnlinkInfo<br>Signature字段为对UnlinkInfo的签名
+    alt 验证成功且执行注销成功，返回HTTP状态码=200
+      Home->>Server: 8.返回 UnlinkBackInfo，不加密
+    else 验证不成功或执行注销失败，返回HTTP状态码!=200
+      Home->>Server: 8.返回 HomeResponseInfo
+    end
+    note right of Server: <==注销流程结束
+```
+
+## 5. 配置
 配置文件 `res/config.yaml` 用于配置服务器的监听地址、内部和外部IP控制、超时参数和日志记录参数。
 
-### 1. HTTP 服务配置
+### HTTP 服务配置
 ```yaml
 http:
   addr: "127.0.0.1:9000"
@@ -71,7 +135,7 @@ http:
   + 值: 127.0.0.1:9000
   + 说明: 服务器将在本地地址 127.0.0.1 的端口 9000 上监听 HTTP 请求
 
-### 2. 内部Rabbit-Server实例 服务配置
+### 内部Rabbit-Server实例 服务配置
 ```yaml
 internal:
   ##### 内部Rabbit-Server实例 Http请求方式
@@ -143,7 +207,7 @@ internal:
     - 值: 字符串
     - 说明：热部署的公钥文件目录路径, 相对于运行目录的相对路径
 
-### 3. 外网客户端 服务配置
+### 外网客户端 服务配置
 ```yaml
 external:
   ##### 外部客户端 Http请求方式
@@ -190,7 +254,7 @@ external:
     - 值: 字符串
     - 说明：私钥文件路径, 相对于运行目录的相对路径
 
-### 4. 日志记录配置
+### 日志记录配置
 ```yaml
 log:
   type: 0   # 0:Console 1:RollingFile 2:DailyFile 3:DailyRollingFile
@@ -241,18 +305,23 @@ log:
     - 单位: 支持 KB, MB, GB, TB, PB, EB。 不写表示为 Byte，但**不能写**Byte。
     - 在 RollingFile 和 DailyRollingFile 模式下生效，表示滚动文件大小上限。
 
-## 实例信息
+## 6. API说明
+
+### 6.1 RegisteredEntity
 Rabbit-Home 记录的实例信息为 RegisteredEntity
 ```go
 // RegisteredEntity 已注册实例
 type RegisteredEntity struct {
-    core.LinkInfo
-    State  core.UpdateInfo       // 实例简单状态
-    Detail core.UpdateDetailInfo // 实例详细状态
+    core.LinkInfo                       // 由 Rabbit-Server 发送来的信息
+    State         core.UpdateInfo       // 实例简单状态
+    Detail        core.UpdateDetailInfo // 实例详细状态
     
-    sk             []byte // 临时共享的对称密钥
-    lastUpdateNano int64  // 上一次更新时间戳
-    hit            int    // 命中次数
+    internalSK       []byte // 内部临时对称密钥
+    internalBase64SK string // 内部临时对称密钥base64字符串
+    openSK           []byte // 对外临时对称密钥
+    openBase64SK     string // 对外临时对称密钥base64字符串
+    lastUpdateNano   int64  // 上一次更新时间戳
+    hit              int    // 命中次数
 }
 
 // LinkInfo
@@ -260,12 +329,21 @@ type RegisteredEntity struct {
 type LinkInfo struct {
     Id          string `json:"id"`           // 实例Id(唯一)
     PlatformId  string `json:"pid"`          // 平台Id
-    Name        string `json:"name"`         // 实例类型名称(不唯一)
+    TypeName    string `json:"type-name"`    // 实例类型名称(不唯一)
     OpenNetwork string `json:"open-network"` // 开放连接通信协议
     OpenAddr    string `json:"open-addr"`    // 开放连接地址
+    OpenKeyOn   bool   `json:"open-key-on"`  // 针对客户端是否启用密钥验证
     Signature   string `json:"signature"`    // 签名
 }
 
+// LinkBackInfo
+// 连接结果信息，从Rabbit-Home返回, 经过RSA加密
+type LinkBackInfo struct {
+    Id         string `json:"id"`          // 实例Id(唯一), 明文
+    InternalSK []byte `json:"internal-sk"` // 临时RSA密钥, 用于内部加密
+    OpenSK     []byte `json:"open-sk"`     // 临时RSA密钥, 用于外部加密
+    Extend     string `json:"extend"`      // 扩展信息, 明文
+}
 
 // UpdateInfo 实例状态
 type UpdateInfo struct {
@@ -291,14 +369,52 @@ type UpdateDetailInfo struct {
     
     EnableKeys string `json:"enable-keys"` // 属性启用标记
 }
+
+// QueryRouteInfo
+// 查找合适的Rabbit-Server的实例
+type QueryRouteInfo struct {
+    PlatformId string `json:"pid"`       // 服务平台Id
+    TypeName   string `json:"type-name"` // 类型名称
+    TempAesKey []byte `json:"temp-key"`  // 临时AES密钥，用于Rabbit-Home返回数据时加密, 如果不提供，返回的密钥数据将以Base64字符串返回
+}
+
+// QueryRouteBackInfo 查找结果
+// 查找合适的Rabbit-Server的实例返回信息，从Rabbit-Home返回
+type QueryRouteBackInfo struct {
+    Id           string `json:"id"`           // 实例Id(唯一)
+    PlatformId   string `json:"pid"`          // 服务平台Id
+    TypeName     string `json:"type-name"`    // 实例类型名称(不唯一)
+    OpenNetwork  string `json:"open-network"` // 开放连接通信协议
+    OpenAddr     string `json:"open-addr"`    // 开放连接地址
+    OpenKeyOn    bool   `json:"open-key-on"`  // 针对客户端是否启用密钥验证
+    OpenBase64SK string `json:"open-sk"`      // 临时密钥的Base64字符串表示，用于对称加密数据。如果请求时有设置临时密钥，则经过加密
+    OpenSK       []byte // 临时密钥，执行ComputeOpenSK后更新，用于对称加密数据
+}
+
 ```
+
+- RegisteredEntity: 已注册实例。
+  + core.LinkInfo: 由 Rabbit-Server 发送来的信息
+  + State: 实例简单状态
+  + Detail: 实例详细状态
+  + internalSK: 内部临时对称密钥
+  + internalBase64SK: 内部临时对称密钥base64字符串
+  + openSK: 对外临时对称密钥
+  + openBase64SK: 对外临时对称密钥base64字符串
+  + lastUpdateNano: 上一次更新时间戳
+  + hit: 命中次数
 - LinkInfo: 实例连接信息。
   + Id: 实例Id(唯一)
   + PlatformId: 平台Id
-  + Name: 实例名称(不唯一)
+  + TypeName: 实例类型名称(不唯一)
   + OpenNetwork: 连接类型
   + OpenAddr: 连接地址
+  + OpenKeyOn: 针对客户端是否启用密钥验证
   + Signature: 签名
+- LinkBackInfo: 连接结果信息。
+  + Id: 实例Id(唯一), 明文
+  + InternalSK: 临时RSA密钥, 用于内部加密
+  + OpenSK: 临时RSA密钥, 用于外部加密
 - UpdateInfo: 实例简单状态。
   + Id: 实例Id
   + Weight: 压力系数。
@@ -315,32 +431,24 @@ type UpdateDetailInfo struct {
   + StatsReqCount: 统计请求数
   + StatsRespUnixNano: 统计响应时间(纳秒)
   + EnableKeys: 属性启用标记
-- lastUpdateNano: 上一次更新时间戳。
-- hit: 命中次数。
+- QueryRouteInfo: 查找合适的Rabbit-Server的实例。
+  + PlatformId: 服务平台Id
+  + TypeName: 实例类型名称
+  + TempAesKey: 临时AES密钥，用于Rabbit-Home返回数据时加密, 如果不提供，返回的密钥数据将以Base64字符串返回
+- QueryRouteBackInfo: 查找结果。
+  + Id: 实例Id(唯一)
+  + PlatformId: 服务平台Id
+  + TypeName: 实例类型名称(不唯一)
+  + OpenNetwork: 连接类型
+  + OpenAddr: 连接地址
+  + OpenKeyOn: 针对客户端是否启用密钥验证
+  + OpenBase64SK: 临时密钥的Base64字符串表示，用于对称加密数据。如果请求时有设置临时密钥，则经过加密
+  + OpenSK: 临时密钥，执行ComputeOpenSK后更新，用于对称加密数据
 
-## 命令行使用
-启动项目后，可以通过命令行进行以下操作:
-
-- 列出实例列表
-  + 示例: `list -name=Name -on=[true|false] -pid=PID`
-  + -name: 实例名称。
-  + -on: 实例是否在线。
-  + -pid: 实例平台Id。
-  + 以上参数如果不写，则列出所有符合的实例。
-- 查询实例信息
-  + 示例: `info -id=Id`
-  + -id: 实例Id。
-  + id参数为必填参数。
-- 踢除实例
-  + 示例: `kick -id=Id`
-  + -id: 实例Id。
-  + id参数为必填参数。
-  + **功能未实现**。
-
-## 服务器实例连接
+### 6.2 服务器相关API接口
 实例可以通过 core/client/ 包下的API，与 Rabbit-Home 进行通信。<br>
 以下以 {homeAddrUrl} 代表config.yaml中配置 http.addr 关联的地址。
-- 服务器连接到 Rabbit-Home：
+- 服务器连接到 Rabbit-Home：url参数中"d"是必要的, "w"是可选择
   + `LinkWithGet(homeAddrUrl string, info core.LinkInfo, weight float64, cb httpx.ReqCallBack) error`
     - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternLink，即"/link"
     - info: 游戏服务器实例基本信息
@@ -353,7 +461,7 @@ type UpdateDetailInfo struct {
     - weight: 实例压力系数重，值越大服务器压力越高
     - cb: 回调，传入nil表示不处理
     - 返回值: 如果调用出现错误，则返回错误信息
-- 服务器断开 Rabbit-Home：
+- 服务器断开 Rabbit-Home：url参数中"d"是必要的
   + `UnlinkWithGet(homeAddrUrl string, info UnlinkInfo, cb httpx.ReqCallBack) error`
     - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUnlink，即"/unlink"
     - info: 断开服务器实例要求的基本信息
@@ -364,7 +472,7 @@ type UpdateDetailInfo struct {
     - id: 断开服务器实例要求的基本信息
     - cb: 回调，传入nil表示不处理
     - 返回值: 如果调用出现错误，则返回错误信息
-- 服务器更新信息到 Rabbit-Home：
+- 服务器更新信息到 Rabbit-Home：url参数中"id"和"d"是必要的, 详细更新时"dt"是必要的
   + `UpdateWithGet(homeAddrUrl string, info core.UpdateInfo, cb httpx.ReqCallBack) error`
     - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternUpdate，即"/update"
     - info: 服务器实例更新信息
@@ -386,10 +494,10 @@ type UpdateDetailInfo struct {
     - cb: 回调，传入nil表示不处理
     - 返回值: 如果调用出现错误，则返回错误信息
 
-## 客户端进行路由查询
+### 6.3 客户端相关API接口
 实例可以通过 core/client/ 包下的API，与 Rabbit-Home 进行通信，获得得应该连接的服务器实例信息。<br>
 以下以 {homeAddrUrl} 代表config.yaml中配置 http.addr 关联的地址。
-- 客户端请求服务器实例：`{httpUrl}/route?data=xxxxxxxx`
+- 客户端请求服务器实例：url参数中"d"是必要的,
   + `RouteWithGet(homeAddrUrl string, cb httpx.ReqCallBack) error`
     - homeAddrUrl: Rabbit-Home 服务器地址，不需要包含Pattern, 实际Pattern是home.PatternRoute，即"/route"
     - cb: 回调，包含服务器实例信息
@@ -399,17 +507,39 @@ type UpdateDetailInfo struct {
     - cb: 回调，包含服务器实例信息
     - 返回值: 如果调用出现错误，则返回错误信息
 
-## 依赖库
+## 7. 命令行使用
+启动项目后，可以通过命令行进行以下操作:
+
+- 列出实例列表
+  + 示例: `list -name=Name -on=[true|false] -pid=PID`
+  + -name: 实例名称。
+  + -on: 实例是否在线。
+  + -pid: 实例平台Id。
+  + 以上参数如果不写，则列出所有符合的实例。
+- 查询实例信息
+  + 示例: `info -id=Id`
+  + -id: 实例Id。
+  + id参数为必填参数。
+- 踢除实例
+  + 示例: `kick -id=Id`
+  + -id: 实例Id。
+  + id参数为必填参数。
+  + **功能未实现**。
+
+## 8. 依赖库
 - infra-go [https://github.com/xuzhuoxi/infra-go](https://github.com/xuzhuoxi/infra-go)<br>
   基础库支持库。
 - goxc [https://github.com/laher/goxc](https://github.com/laher/goxc)<br>
   打包依赖库，主要用于交叉编译
 - json-iterator [https://github.com/json-iterator/go](https://github.com/json-iterator/go)<br>
   带对应结构体的Json解释库
+- yaml.v2 [https://gopkg.in/yaml.v2](https://gopkg.in/yaml.v2)<br>
+  YAML配置解析库
 
-## Contact
+
+## 9. 联系任务
 xuzhuoxi<br>
 <xuzhuoxi@gmail.com> or <mailxuzhuoxi@163.com> or <m_xuzhuoxi@outlook.com>
 
-## License
+## 10. 授权协议
 Rabbit-Home source code is available under the MIT [License](/LICENSE).
