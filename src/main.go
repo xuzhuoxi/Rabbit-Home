@@ -5,32 +5,22 @@ package main
 
 import (
 	"github.com/xuzhuoxi/Rabbit-Home/core/cmd"
-	"github.com/xuzhuoxi/Rabbit-Home/core/home"
-	"github.com/xuzhuoxi/Rabbit-Home/core/home/service"
+	"github.com/xuzhuoxi/Rabbit-Home/src/module"
+	"github.com/xuzhuoxi/infra-go/serialx"
 )
 
+var (
+	StartupManager serialx.IStartupManager
+)
+
+func init() {
+	StartupManager = serialx.NewStartupManager()
+	StartupManager.AppendModule(module.NewModuleLogo())
+	StartupManager.AppendModule(module.NewModuleServer())
+	StartupManager.AppendModule(module.NewModuleRunner())
+}
+
 func main() {
-	setSortFunc()
-	showHomeInfo()
-	registerHomeServices()
-	runRabbitHome()
-}
-
-func showHomeInfo() {
-}
-
-func registerHomeServices() {
-	home.RegisterMapHandler(home.PatternLink, service.NewServiceLinkHandler)
-	home.RegisterMapHandler(home.PatternUpdate, service.NewServiceUpdateHandler)
-	home.RegisterMapHandler(home.PatternUnlink, service.NewServiceUnlinkHandler)
-	home.RegisterMapHandler(home.PatternRoute, service.NewServiceRouteHandler)
-}
-
-func setSortFunc() {
-	home.SetDefaultFuncSortEntity(home.WeightLess)
-}
-
-func runRabbitHome() {
-	go home.StartHomeServer()
+	StartupManager.StartManager()
 	cmd.StartCmdListener()
 }

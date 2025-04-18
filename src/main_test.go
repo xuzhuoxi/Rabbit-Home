@@ -144,7 +144,7 @@ func TestQuery(t *testing.T) {
 				t.Fatal(fail)
 				return
 			}
-			err = suc.HandleOpenSK(queryRouteInfos[saveIndex].TempAesKey)
+			err = suc.ComputeOpenSK(queryRouteInfos[saveIndex].TempAesKey)
 			if nil != err {
 				t.Fatal(err)
 				return

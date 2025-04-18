@@ -149,10 +149,10 @@ type QueryRouteBackInfo struct {
 	OpenAddr     string `json:"open-addr"`    // 开放连接地址
 	OpenKeyOn    bool   `json:"open-key-on"`  // 针对客户端是否启用密钥验证
 	OpenBase64SK string `json:"open-sk"`      // 临时密钥的Base64字符串表示，用于对称加密数据。如果请求时有设置临时密钥，则经过加密
-	OpenSK       []byte
+	OpenSK       []byte // 临时密钥，执行ComputeOpenSK后更新，用于对称加密数据
 }
 
-func (q *QueryRouteBackInfo) HandleOpenSK(tempAesKey []byte) error {
+func (q *QueryRouteBackInfo) ComputeOpenSK(tempAesKey []byte) error {
 	if len(q.OpenBase64SK) == 0 || !q.OpenKeyOn {
 		return nil
 	}
