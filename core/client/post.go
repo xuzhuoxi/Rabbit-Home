@@ -7,8 +7,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"github.com/xuzhuoxi/Rabbit-Home/core/home"
+	"github.com/xuzhuoxi/infra-go/cryptox"
 	"github.com/xuzhuoxi/infra-go/cryptox/asymmetric"
-	"github.com/xuzhuoxi/infra-go/cryptox/symmetric"
 	"github.com/xuzhuoxi/infra-go/netx/httpx"
 	"net/url"
 	"strconv"
@@ -58,14 +58,14 @@ func UnlinkWithPost(homeAddrUrl string, info core.UnlinkInfo, cb httpx.ReqCallBa
 // info: 服务器状态信息
 // cb: 回调，传入nil表示不处理
 // 返回值：如果调用出现错误，则返回错误信息
-func UpdateWithPost(homeAddrUrl string, info core.UpdateInfo, aesCipher symmetric.IAESCipher, cb httpx.ReqCallBack) error {
+func UpdateWithPost(homeAddrUrl string, info core.UpdateInfo, encryptCipher cryptox.IEncryptCipher, cb httpx.ReqCallBack) error {
 	id := core.Base64Encoding.EncodeToString([]byte(info.Id))
 	bs, err := jsoniter.Marshal(info)
 	if nil != err {
 		return err
 	}
-	if nil != aesCipher {
-		bs, err = aesCipher.Encrypt(bs)
+	if nil != encryptCipher {
+		bs, err = encryptCipher.Encrypt(bs)
 		if nil != err {
 			return err
 		}
@@ -83,14 +83,14 @@ func UpdateWithPost(homeAddrUrl string, info core.UpdateInfo, aesCipher symmetri
 // detail: 服务器详细状态信息
 // cb: 回调，传入nil表示不处理
 // 返回值：如果调用出现错误，则返回错误信息
-func UpdateDetailWithPost(homeAddrUrl string, detail core.UpdateDetailInfo, aesCipher symmetric.IAESCipher, cb httpx.ReqCallBack) error {
+func UpdateDetailWithPost(homeAddrUrl string, detail core.UpdateDetailInfo, encryptCipher cryptox.IEncryptCipher, cb httpx.ReqCallBack) error {
 	id := core.Base64Encoding.EncodeToString([]byte(detail.Id))
 	bs, err := jsoniter.Marshal(detail)
 	if nil != err {
 		return err
 	}
-	if nil != aesCipher {
-		bs, err = aesCipher.Encrypt(bs)
+	if nil != encryptCipher {
+		bs, err = encryptCipher.Encrypt(bs)
 		if nil != err {
 			return err
 		}

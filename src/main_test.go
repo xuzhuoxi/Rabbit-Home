@@ -33,9 +33,9 @@ var (
 
 type extLinkInfo struct {
 	core.LinkInfo
-	InternalSK []byte
-	OpenSK     []byte
-	AesCipher  symmetric.IAESCipher
+	InternalSK        []byte
+	InternalAesCipher symmetric.IAESCipher
+	OpenSK            []byte
 }
 
 var (
@@ -175,7 +175,7 @@ func testLink(t *testing.T, index int) {
 		}
 		if internalKeyEnable {
 			linkInfos[index].InternalSK = suc.InternalSK
-			linkInfos[index].AesCipher = symmetric.NewAESCipher(suc.InternalSK)
+			linkInfos[index].InternalAesCipher = symmetric.NewAESCipher(suc.InternalSK)
 		}
 		if len(suc.OpenSK) > 0 {
 			linkInfos[index].OpenSK = suc.OpenSK
@@ -213,7 +213,7 @@ func testUpdateDetailRandom(t *testing.T, index int) {
 
 func testUpdate(t *testing.T, index int) {
 	t.Log("UpdateInfo:", index, updateInfos[index])
-	funcUpdate(homeUrl, *updateInfos[index], linkInfos[index].AesCipher, func(res *http.Response, body *[]byte) {
+	funcUpdate(homeUrl, *updateInfos[index], linkInfos[index].InternalAesCipher, func(res *http.Response, body *[]byte) {
 		fail, err := client.ParseUpdateBackInfo(res, body)
 		if nil != err {
 			t.Fatal(err)
@@ -228,7 +228,7 @@ func testUpdate(t *testing.T, index int) {
 }
 func testUpdateDetail(t *testing.T, index int) {
 	t.Log("DetailInfo:", index, detailInfos[index])
-	funcUpdateDetail(homeUrl, *detailInfos[index], linkInfos[index].AesCipher, func(res *http.Response, body *[]byte) {
+	funcUpdateDetail(homeUrl, *detailInfos[index], linkInfos[index].InternalAesCipher, func(res *http.Response, body *[]byte) {
 		fail, err := client.ParseUpdateBackInfo(res, body)
 		if nil != err {
 			t.Fatal(err)
