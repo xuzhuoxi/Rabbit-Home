@@ -75,7 +75,7 @@ func (l *clientRouteHandler) ServeHTTP(writer http.ResponseWriter, request *http
 
 	// 执行查询
 	entity, ok := home.GlobalHomeServer.QuerySmartEntity(query.PlatformId, query.TypeName)
-	fmt.Println("结果：", &entity)
+	//fmt.Println("结果：", &entity)
 	if !ok {
 		warnInfo := "Query Fail. Cannot query a smart entity." + request.RemoteAddr
 		warnResponse(writer, http.StatusNotFound, core.CodeEntityQueryFail, warnInfo, l.logger)

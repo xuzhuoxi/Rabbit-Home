@@ -5,7 +5,6 @@ package home
 
 import (
 	"errors"
-	"fmt"
 	"github.com/xuzhuoxi/Rabbit-Home/core"
 	"sort"
 	"sync"
@@ -292,7 +291,7 @@ func (o *EntityList) queryEntities(entities []*RegisteredEntity) (entity Registe
 	sort.Slice(entities, func(i, j int) bool {
 		return o.funcSort(entities[i], entities[j])
 	})
-	fmt.Println("Sort:", entities)
+	//fmt.Println("Sort:", entities)
 	entities[0].AddHit()
 	entity = *entities[0]
 	return entity, true
